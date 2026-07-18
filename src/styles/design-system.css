@@ -11,13 +11,13 @@
   /* Workflow State Colors */
   --primary: #2563eb;         /* Active Stage / Standard Action */
   --primary-light: #eff6ff;
-  --success: #10b981;         /* Completed / Minimum Risk Approved[cite: 1, 2] */
+  --success: #10b981;         /* Completed / Minimum Risk Approved */
   --success-light: #d1fae5;
-  --warning: #f59e0b;         /* Revision Required / Return to Applicant[cite: 1, 2] */
+  --warning: #f59e0b;         /* Revision Required / Return to Applicant */
   --warning-light: #fef3c7;
-  --danger: #ef4444;          /* Incomplete / Rejected[cite: 1, 2] */
+  --danger: #ef4444;          /* Incomplete / Rejected */
   --danger-light: #fee2e2;
-  --purple: #8b5cf6;          /* Higher Risk / Main Committee Endorsement[cite: 1, 2] */
+  --purple: #8b5cf6;          /* Higher Risk / Main Committee Endorsement */
   --purple-light: #f3e8ff;
 
   /* Spacing & Elevation */

@@ -71,7 +71,7 @@ export default function SecretariatDashboard() {
     fetchSubmissions();
   };
 
-  // ACTION 2: Mark Complete submission as "Day 0" & Advance to Stage 2 Evaluation[cite: 1, 2]
+  // ACTION 2: Mark Complete submission as "Day 0" & Advance to Stage 2 Evaluation
   const markDayZero = async () => {
     if (!selectedSubmission) return;
 
