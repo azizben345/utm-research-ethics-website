@@ -1,22 +1,22 @@
 import React from 'react';
 import { 
-  FileText, 
-  Upload, 
   Download, 
-  Trash2, 
+  Upload, 
   ArrowLeft, 
   ArrowRight, 
   Info, 
-  CheckCircle2, 
-  AlertCircle 
+  FileText, 
+  Trash2 
 } from 'lucide-react';
+import DocumentSlot from '../DocumentSlot';
 
 export default function Step3DocumentRepository({ formData, setFormData, onPrev, onNext }) {
 
   // Helper to simulate attaching a document to state
   const handleSimulatedUpload = (docTypeLabel, fileNamePrefix) => {
     const randomNum = Math.floor(100 + Math.random() * 900);
-    const fakeFileName = `${fileNamePrefix}_${formData.projectTitle.replace(/\s+/g, '_').slice(0, 12)}_${randomNum}.pdf`;
+    const safeTitle = (formData.projectTitle || 'Research_Project').replace(/\s+/g, '_').slice(0, 12);
+    const fakeFileName = `${fileNamePrefix}_${safeTitle}_${randomNum}.pdf`;
     
     const newDoc = {
       id: `doc-${Date.now()}-${randomNum}`,
@@ -24,176 +24,203 @@ export default function Step3DocumentRepository({ formData, setFormData, onPrev,
       type: docTypeLabel,
       uploadDate: new Date().toISOString().split('T')[0],
       size: '2.4 MB',
-      status: 'Pending Screening' // Default status for Secretariat Stage 1
+      status: 'Pending Screening'
     };
 
-    setFormData({
-      ...formData,
-      documents: [...formData.documents, newDoc]
-    });
+    setFormData(prev => ({
+      ...prev,
+      documents: [...(prev.documents || []), newDoc]
+    }));
   };
 
   const removeDocument = (docId) => {
-    setFormData({
-      ...formData,
-      documents: formData.documents.filter((d) => d.id !== docId)
-    });
+    setFormData(prev => ({
+      ...prev,
+      documents: (prev.documents || []).filter(d => d.id !== docId)
+    }));
   };
 
-  // Check if mandatory templates have been uploaded
-  const hasChecklist = formData.documents.some((d) => d.type.includes('Checklist'));
-  const hasCV = formData.documents.some((d) => d.type.includes('Curriculum Vitae'));
+  // Retrieves the first attached document matching a specific type label
+  const getAttachedDoc = (typeLabel) => {
+    return (formData.documents || []).find(d => d.type === typeLabel) || null;
+  };
+
+  // Handler to remove a document by its type label directly from the slot
+  const handleRemoveByType = (typeLabel) => {
+    const doc = getAttachedDoc(typeLabel);
+    if (doc) removeDocument(doc.id);
+  };
+
+  // Validation checks for mandatory progress
+  const hasChecklist = !!getAttachedDoc('Checklist Form (1.4)');
+  const hasConsent = !!getAttachedDoc('Respondent Consent Form');
+  const hasCV = !!getAttachedDoc('Curriculum Vitae (CV)');
 
   return (
-    <div className="card">
-      <div className="flex-between" style={{ marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
+    <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+      
+      {/* HEADER */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color, #e5e7eb)', paddingBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h2 style={{ margin: '0 0 0.25rem 0' }}>3. Supporting Document Repository</h2>
-          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-            Protocol: <strong>{formData.formTitle}</strong> | All files must be max 10 MB per file.
+          <h2 style={{ margin: '0 0 0.25rem 0', fontSize: '1.25rem', color: 'var(--text-main, #111827)' }}>3. Supporting Document Repository</h2>
+          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted, #6b7280)' }}>
+            Protocol: <strong>{formData.formTitle || 'Research Application'}</strong> | Max file size: 10 MB per PDF.
           </span>
         </div>
-        <span className="badge badge-primary">Files Attached: {formData.documents.length}</span>
+        <span className="badge" style={{ padding: '0.4rem 0.75rem', backgroundColor: '#eff6ff', color: '#1e3a8a', borderRadius: '20px', fontWeight: 600, fontSize: '0.85rem' }}>
+          Files Attached: {(formData.documents || []).length}
+        </span>
       </div>
 
-      {/* ZONE A: OFFICIAL INSTITUTIONAL TEMPLATES (DOWNLOAD & UPLOAD) */}
-      <div style={{ marginBottom: '2.5rem' }}>
-        <h3 style={{ fontSize: '1.05rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+      {/* ZONE A: OFFICIAL INSTITUTIONAL TEMPLATES */}
+      <section>
+        <h3 style={{ fontSize: '1.05rem', color: 'var(--primary, #2563eb)', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0 0 0.35rem 0' }}>
           <Download size={18} /> Zone A: Official Institutional Templates
         </h3>
-        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted, #6b7280)', margin: '0 0 1.25rem 0' }}>
           Download the required UTM REC templates below, complete them offline, and re-upload the signed PDF versions.
         </p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-          
-          {/* Template 1: Checklist Form 1.4 */}
-          <div style={{ padding: '1rem', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', background: 'var(--bg-app)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <div>
-              <div className="flex-between" style={{ marginBottom: '0.5rem' }}>
-                <span className="badge badge-warning" style={{ textTransform: 'none' }}>Mandatory Check</span>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Max 1 MB</span>
-              </div>
-              <h4 style={{ margin: '0 0 0.25rem 0', fontSize: '0.9rem' }}>Checklist Form (1.4)</h4>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0 0 1rem 0' }}>Checked by Secretariat during early screening.</p>
-            </div>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button type="button" className="btn" style={{ flex: 1, background: '#fff', border: '1px solid var(--border-color)', fontSize: '0.75rem', justifyContent: 'center' }}>
-                <Download size={14} /> Template
-              </button>
-              <button 
-                type="button" 
-                className="btn btn-primary" 
-                style={{ flex: 1, fontSize: '0.75rem', justifyContent: 'center' }}
-                onClick={() => handleSimulatedUpload('Checklist Form (1.4)', 'UTM_Checklist')}
-              >
-                <Upload size={14} /> Upload
-              </button>
-            </div>
-          </div>
+        <DocumentSlot 
+          title="Checklist Form (1.4)"
+          description="Checked by the Secretariat during early screening. Must be duly completed and signed (Max 1 MB)."
+          required={true}
+          templateUrl="#download-checklist-1.4"
+          templateName="Download Checklist Template"
+          attachedFile={getAttachedDoc('Checklist Form (1.4)')}
+          onUpload={() => handleSimulatedUpload('Checklist Form (1.4)', 'UTM_Checklist')}
+          onRemove={() => handleRemoveByType('Checklist Form (1.4)')}
+        />
 
-          {/* Template 2: Consent Form */}
-          <div style={{ padding: '1rem', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', background: 'var(--bg-app)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <div>
-              <div className="flex-between" style={{ marginBottom: '0.5rem' }}>
-                <span className="badge badge-primary" style={{ textTransform: 'none' }}>English & Malay</span>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Max 10 MB</span>
-              </div>
-              <h4 style={{ margin: '0 0 0.25rem 0', fontSize: '0.9rem' }}>Respondent Information & Consent</h4>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0 0 1rem 0' }}>Standard institutional consent templates.</p>
-            </div>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button type="button" className="btn" style={{ flex: 1, background: '#fff', border: '1px solid var(--border-color)', fontSize: '0.75rem', justifyContent: 'center' }}>
-                <Download size={14} /> Template
-              </button>
-              <button 
-                type="button" 
-                className="btn btn-primary" 
-                style={{ flex: 1, fontSize: '0.75rem', justifyContent: 'center' }}
-                onClick={() => handleSimulatedUpload('Respondent Consent Form', 'Informed_Consent')}
-              >
-                <Upload size={14} /> Upload
-              </button>
-            </div>
-          </div>
+        <DocumentSlot 
+          title="Respondent Information & Consent Form"
+          description="Standard institutional consent templates in English & Malay. Required for studies involving human respondents (Max 10 MB)."
+          required={true}
+          templateUrl="#download-consent-templates"
+          templateName="Download English & Malay Templates"
+          attachedFile={getAttachedDoc('Respondent Consent Form')}
+          onUpload={() => handleSimulatedUpload('Respondent Consent Form', 'Informed_Consent')}
+          onRemove={() => handleRemoveByType('Respondent Consent Form')}
+        />
+      </section>
 
-        </div>
-      </div>
-
-      {/* ZONE B: PROJECT-SPECIFIC ATTACHMENTS */}
-      <div style={{ marginBottom: '2rem' }}>
-        <h3 style={{ fontSize: '1.05rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+      {/* ZONE B: PROJECT-SPECIFIC SUPPORTING FILES */}
+      <section>
+        <h3 style={{ fontSize: '1.05rem', color: 'var(--text-main, #111827)', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0 0 0.35rem 0' }}>
           <Upload size={18} /> Zone B: Project-Specific Supporting Files
         </h3>
-        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-          Click below to simulate attaching required independent research documentation to your application package.
+        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted, #6b7280)', margin: '0 0 1rem 0' }}>
+          Attach your independent research documentation, academic resumes, and technical protocols.
         </p>
 
-        {/* Validation Rule Info Box */}
-        <div style={{ padding: '0.75rem 1rem', backgroundColor: '#eff6ff', borderRadius: 'var(--radius-sm)', border: '1px solid #bfdbfe', display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.8rem', color: '#1e3a8a', marginBottom: '1.25rem' }}>
-          <Info size={16} style={{ flexShrink: 0 }} />
+        {/* Validation Rule Info Banner */}
+        <div style={{ padding: '0.85rem 1rem', backgroundColor: '#eff6ff', borderRadius: '6px', border: '1px solid #bfdbfe', display: 'flex', gap: '0.75rem', alignItems: 'center', fontSize: '0.85rem', color: '#1e3a8a', marginBottom: '1.25rem' }}>
+          <Info size={18} style={{ flexShrink: 0 }} />
           <span>
             <strong>Instrument Validation Rule:</strong> Instruments used to collect data must be validated by at least <strong>2 expert reviewers</strong> (or attach a written justification if deemed unnecessary).
           </span>
         </div>
 
-        {/* Simulation Action Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.75rem', padding: '1.25rem', border: '2px dashed var(--border-color)', borderRadius: 'var(--radius-md)', background: 'var(--bg-app)' }}>
-          
-          <button type="button" className="btn" style={{ background: '#fff', border: '1px solid var(--border-color)', fontSize: '0.8rem', justifyContent: 'flex-start' }} onClick={() => handleSimulatedUpload('Curriculum Vitae (CV)', 'PI_Resume')}>
-            + Attach CV (Up to 10 files)
-          </button>
-          
-          <button type="button" className="btn" style={{ background: '#fff', border: '1px solid var(--border-color)', fontSize: '0.8rem', justifyContent: 'flex-start' }} onClick={() => handleSimulatedUpload('Research Procedure Gantt Chart', 'Gantt_Chart')}>
-            + Attach Gantt Chart
-          </button>
-          
-          <button type="button" className="btn" style={{ background: '#fff', border: '1px solid var(--border-color)', fontSize: '0.8rem', justifyContent: 'flex-start' }} onClick={() => handleSimulatedUpload('Research Instrument / Protocol', 'Study_Protocol')}>
-            + Attach Instrument/Protocol
-          </button>
-          
-          <button type="button" className="btn" style={{ background: '#fff', border: '1px solid var(--border-color)', fontSize: '0.8rem', justifyContent: 'flex-start' }} onClick={() => handleSimulatedUpload('Proof of Instrument Validation', 'Expert_Validation')}>
-            + Attach 2-Expert Validation
-          </button>
-          
-          {formData.formType === 'FORM-CLINICAL' && (
-            <button type="button" className="btn" style={{ background: '#fff', border: '1px solid var(--border-color)', fontSize: '0.8rem', justifyContent: 'flex-start', color: 'var(--primary)' }} onClick={() => handleSimulatedUpload('Good Clinical Practices (GCP)', 'GCP_Certificate')}>
-              + Attach GCP Certificate
-            </button>
-          )}
+        <DocumentSlot 
+          title="Curriculum Vitae (CV)"
+          description="Academic CV for Principal Investigator and all listed Co-Investigators. Combine into a single PDF or attach primary."
+          required={true}
+          attachedFile={getAttachedDoc('Curriculum Vitae (CV)')}
+          onUpload={() => handleSimulatedUpload('Curriculum Vitae (CV)', 'PI_Team_CV')}
+          onRemove={() => handleRemoveByType('Curriculum Vitae (CV)')}
+        />
 
-          {formData.formType === 'FORM-ANIMAL' && (
-            <button type="button" className="btn" style={{ background: '#fff', border: '1px solid var(--border-color)', fontSize: '0.8rem', justifyContent: 'flex-start', color: 'var(--primary)' }} onClick={() => handleSimulatedUpload('Veterinarian Declaration', 'Vet_Declaration')}>
-              + Attach Vet Declaration
-            </button>
-          )}
+        <DocumentSlot 
+          title="Research Procedure Gantt Chart"
+          description="Project timeline and milestones detailing research phases, intervention schedules, and data collection periods."
+          required={false}
+          attachedFile={getAttachedDoc('Research Procedure Gantt Chart')}
+          onUpload={() => handleSimulatedUpload('Research Procedure Gantt Chart', 'Gantt_Chart')}
+          onRemove={() => handleRemoveByType('Research Procedure Gantt Chart')}
+        />
 
-        </div>
-      </div>
+        <DocumentSlot 
+          title="Research Instrument / Study Protocol"
+          description="Questionnaires, interview topic guides, focus group protocols, or detailed experimental intervention designs."
+          required={false}
+          attachedFile={getAttachedDoc('Research Instrument / Protocol')}
+          onUpload={() => handleSimulatedUpload('Research Instrument / Protocol', 'Study_Protocol')}
+          onRemove={() => handleRemoveByType('Research Instrument / Protocol')}
+        />
 
-      {/* ATTACHED DOCUMENTS AUDIT LIST */}
-      <div>
-        <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '0.95rem' }}>Attached Documents Package ({formData.documents.length})</h4>
-        {formData.documents.length === 0 ? (
-          <div style={{ padding: '2rem', textAlign: 'center', background: 'var(--bg-app)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-            No documents attached yet. Use the buttons above to attach your Checklist Form 1.4 and CVs.
+        <DocumentSlot 
+          title="Proof of Instrument Validation"
+          description="Validation scorecards or feedback forms signed by at least 2 expert reviewers, or formal justification if unneeded."
+          required={false}
+          attachedFile={getAttachedDoc('Proof of Instrument Validation')}
+          onUpload={() => handleSimulatedUpload('Proof of Instrument Validation', 'Expert_Validation')}
+          onRemove={() => handleRemoveByType('Proof of Instrument Validation')}
+        />
+
+        {/* Conditional Slot: Clinical Trials */}
+        {formData.formType === 'FORM-CLINICAL' && (
+          <DocumentSlot 
+            title="Good Clinical Practices (GCP) Certificate"
+            description="Valid GCP training certification for Principal Investigator and clinical sub-investigators handling trials."
+            required={true}
+            attachedFile={getAttachedDoc('Good Clinical Practices (GCP)')}
+            onUpload={() => handleSimulatedUpload('Good Clinical Practices (GCP)', 'GCP_Certificate')}
+            onRemove={() => handleRemoveByType('Good Clinical Practices (GCP)')}
+          />
+        )}
+
+        {/* Conditional Slot: Animal Research */}
+        {formData.formType === 'FORM-ANIMAL' && (
+          <DocumentSlot 
+            title="Veterinarian Declaration / Competency Proof"
+            description="Annual Veterinary Practice Certificate (Act 1974), DVS confirmation letter, or animal handling competency certificates."
+            required={true}
+            attachedFile={getAttachedDoc('Veterinarian Declaration')}
+            onUpload={() => handleSimulatedUpload('Veterinarian Declaration', 'Vet_Declaration')}
+            onRemove={() => handleRemoveByType('Veterinarian Declaration')}
+          />
+        )}
+
+        {/* Extra Slot: Other Related Documents */}
+        <DocumentSlot 
+          title="Other Related Documents"
+          description="Any additional supporting files such as external authority permits (PERHILITAN, DVS, Fishery), IBC biosafety approvals, grant award letters, or collaborative proof."
+          required={false}
+          attachedFile={getAttachedDoc('Other Related Documents')}
+          onUpload={() => handleSimulatedUpload('Other Related Documents', 'Other_Attachment')}
+          onRemove={() => handleRemoveByType('Other Related Documents')}
+        />
+      </section>
+
+      {/* ATTACHED DOCUMENTS AUDIT TRAIL */}
+      <section style={{ borderTop: '1px solid var(--border-color, #e5e7eb)', paddingTop: '1.5rem' }}>
+        <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '0.95rem', color: 'var(--text-main, #111827)' }}>
+          Complete Package Summary ({(formData.documents || []).length} files ready for submission)
+        </h4>
+        {(formData.documents || []).length === 0 ? (
+          <div style={{ padding: '1.5rem', textAlign: 'center', background: 'var(--bg-app, #f9fafb)', borderRadius: '6px', border: '1px dashed var(--border-color, #d1d5db)', color: 'var(--text-muted, #6b7280)', fontSize: '0.85rem' }}>
+            No documents attached yet. Use the slots above to attach your Checklist Form 1.4, Consent Form, and CVs.
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '250px', overflowY: 'auto', paddingRight: '0.25rem' }}>
-            {formData.documents.map((doc) => (
-              <div key={doc.id} className="flex-between" style={{ padding: '0.75rem 1rem', background: '#fff', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <FileText size={18} color="var(--primary)" />
-                  <div>
-                    <span style={{ fontSize: '0.875rem', fontWeight: 600, display: 'block' }}>{doc.name}</span>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Type: {doc.type} | Size: {doc.size}</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '220px', overflowY: 'auto' }}>
+            {(formData.documents || []).map((doc) => (
+              <div key={doc.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: '#fff', borderRadius: '4px', border: '1px solid var(--border-color, #e5e7eb)', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', overflow: 'hidden' }}>
+                  <FileText size={18} color="var(--primary, #2563eb)" style={{ flexShrink: 0 }} />
+                  <div style={{ overflow: 'hidden' }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main, #111827)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {doc.name}
+                    </span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted, #6b7280)' }}>
+                      Category: <strong>{doc.type}</strong> | Size: {doc.size}
+                    </span>
                   </div>
                 </div>
                 <button 
                   type="button"
                   onClick={() => removeDocument(doc.id)} 
-                  style={{ background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer', padding: '0.25rem' }} 
-                  title="Remove file"
+                  style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '0.25rem', display: 'flex', alignItems: 'center' }} 
+                  title="Remove file from package"
                 >
                   <Trash2 size={16} />
                 </button>
@@ -201,23 +228,42 @@ export default function Step3DocumentRepository({ formData, setFormData, onPrev,
             ))}
           </div>
         )}
-      </div>
+      </section>
 
-      {/* Navigation Footer */}
-      <div className="flex-between" style={{ marginTop: '2rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.25rem' }}>
-        <button className="btn" style={{ background: 'transparent', color: 'var(--text-muted)' }} onClick={onPrev}>
+      {/* NAVIGATION FOOTER */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-color, #e5e7eb)', paddingTop: '1.25rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <button 
+          type="button"
+          className="btn" 
+          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'transparent', color: 'var(--text-muted, #6b7280)', border: 'none', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600 }} 
+          onClick={onPrev}
+        >
           <ArrowLeft size={16} /> Previous: Protocol Questionnaire
         </button>
         <button 
+          type="button"
           className="btn btn-primary" 
-          disabled={!hasChecklist || !hasCV}
+          disabled={!hasChecklist || !hasConsent || !hasCV}
           onClick={onNext} 
-          style={{ padding: '0.75rem 1.5rem', opacity: (!hasChecklist || !hasCV) ? 0.5 : 1 }}
-          title={(!hasChecklist || !hasCV) ? "Please attach at least your Checklist Form and CV to proceed" : ""}
+          style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '0.5rem', 
+            padding: '0.75rem 1.5rem', 
+            backgroundColor: 'var(--primary, #2563eb)', 
+            color: '#fff', 
+            border: 'none', 
+            borderRadius: '4px', 
+            cursor: (!hasChecklist || !hasConsent || !hasCV) ? 'not-allowed' : 'pointer',
+            fontWeight: 600,
+            opacity: (!hasChecklist || !hasConsent || !hasCV) ? 0.5 : 1 
+          }}
+          title={(!hasChecklist || !hasConsent || !hasCV) ? "Please attach your Checklist Form 1.4, Consent Form, and CV to proceed" : ""}
         >
           Next: Review Fee Processing <ArrowRight size={16} />
         </button>
       </div>
+
     </div>
   );
 }
