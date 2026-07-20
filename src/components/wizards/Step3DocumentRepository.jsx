@@ -260,7 +260,7 @@ export default function Step3DocumentRepository({ formData, setFormData, onPrev,
           }}
           title={(!hasChecklist || !hasConsent || !hasCV) ? "Please attach your Checklist Form 1.4, Consent Form, and CV to proceed" : ""}
         >
-          Next: Review Fee Processing <ArrowRight size={16} />
+          Next: Preview Draft Submission <ArrowRight size={16} />
         </button>
       </div>
 

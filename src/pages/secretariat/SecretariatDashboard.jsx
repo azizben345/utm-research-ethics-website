@@ -1,78 +1,55 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  FolderClock, 
   CheckCircle2, 
   AlertTriangle, 
   FileText, 
   ChevronRight, 
   ArrowLeft, 
-  UserCheck, 
-  RefreshCw 
+  RefreshCw,
+  Eye,
+  X,
+  Inbox
 } from 'lucide-react';
+import DocChecklistForm from '../../components/wizards/forms/DocChecklistForm'; // Ensure this path matches your project structure
 
-export default function SecretariatDashboard() {
+export default function SecretariatDashboard({ user, onViewProtocol }) {
+  // 1. Initialize with an empty array for live backend data
   const [submissions, setSubmissions] = useState([]);
   const [selectedSubmission, setSelectedSubmission] = useState(null);
+  const [isChecklistOpen, setIsChecklistOpen] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch all submissions from database
+  // 2. Safe Fetch Function with Error Handling
   const fetchSubmissions = () => {
     setLoading(true);
     fetch('http://localhost:3001/submissions')
       .then((res) => res.json())
       .then((data) => {
-        setSubmissions(data);
-        // If we are currently inspecting a project, keep its data synced
+        // Ensure data is always an array even if db.json returns something weird
+        const safeData = Array.isArray(data) ? data : [];
+        setSubmissions(safeData);
+        
+        // Keep selected project synced after a background refresh
         if (selectedSubmission) {
-          const updatedSelected = data.find((s) => s.id === selectedSubmission.id);
+          const updatedSelected = safeData.find((s) => s.id === selectedSubmission.id);
           setSelectedSubmission(updatedSelected || null);
         }
         setLoading(false);
       })
-      .catch((err) => console.error('Error fetching data:', err));
+      .catch((err) => {
+        console.error('Error fetching secretariat data:', err);
+        setSubmissions([]);
+        setLoading(false);
+      });
   };
 
   useEffect(() => {
     fetchSubmissions();
   }, []);
 
-  // ACTION 1: Toggle individual document status (Verified <-> Incomplete)
-  const toggleDocumentStatus = async (docId) => {
-    if (!selectedSubmission) return;
-
-    // Map through documents and flip the status of the target file
-    const updatedDocs = selectedSubmission.documents.map((doc) => {
-      if (doc.id === docId) {
-        return {
-          ...doc,
-          status: doc.status === 'Verified' ? 'Incomplete / Missing Info' : 'Verified'
-        };
-      }
-      return doc;
-    });
-
-    // Check if any document is now marked as Incomplete
-    const hasIncomplete = updatedDocs.some((d) => d.status !== 'Verified');
-
-    const updatedPayload = {
-      ...selectedSubmission,
-      documents: updatedDocs,
-      requiresRevision: hasIncomplete,
-      revisionMessage: hasIncomplete ? 'Secretariat early screening flagged incomplete or missing document details.' : ''
-    };
-
-    // Send PATCH request to json-server to persist data
-    await fetch(`http://localhost:3001/submissions/${selectedSubmission.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updatedPayload)
-    });
-
-    fetchSubmissions();
-  };
-
-  // ACTION 2: Mark Complete submission as "Day 0" & Advance to Stage 2 Evaluation
-  const markDayZero = async () => {
+  // 3. LIVE ACTION: Save "Day 0" to database
+  const handleMarkDayZero = async () => {
     if (!selectedSubmission) return;
 
     const updatedPayload = {
@@ -83,22 +60,69 @@ export default function SecretariatDashboard() {
       revisionMessage: ''
     };
 
-    await fetch(`http://localhost:3001/submissions/${selectedSubmission.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updatedPayload)
-    });
+    try {
+      const res = await fetch(`http://localhost:3001/submissions/${selectedSubmission.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedPayload)
+      });
 
-    fetchSubmissions();
-    alert(`Submission ${selectedSubmission.id} successfully marked as Day 0. Ready for Evaluator Appointment.`);
+      if (res.ok) {
+        alert(`Application ${selectedSubmission.id} successfully marked as Day 0.\nIt is now ready for Evaluator Appointment (Stage 2).`);
+        setSelectedSubmission(null);
+        setIsChecklistOpen(false);
+        fetchSubmissions(); // Refresh live queue
+      }
+    } catch (err) {
+      console.error('Failed to mark Day 0:', err);
+      alert('Error updating database. Please check if json-server is running.');
+    }
   };
 
-  if (loading && submissions.length === 0) {
-    return <div className="container">Loading Secretariat Portal...</div>;
+  // 4. LIVE ACTION: Save "Return to Applicant" revision request to database
+  const handleReturnToApplicant = async () => {
+    if (!selectedSubmission) return;
+
+    const reason = prompt("Enter reason for returning application (e.g., 'Missing CVs or Proof of Payment'):");
+    if (!reason) return;
+
+    const updatedPayload = {
+      ...selectedSubmission,
+      requiresRevision: true,
+      statusLabel: 'Returned for Revision',
+      revisionMessage: reason
+    };
+
+    try {
+      const res = await fetch(`http://localhost:3001/submissions/${selectedSubmission.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedPayload)
+      });
+
+      if (res.ok) {
+        alert(`Application returned to ${selectedSubmission.applicantName || 'the applicant'} for revision.`);
+        setSelectedSubmission(null);
+        setIsChecklistOpen(false);
+        fetchSubmissions(); // Refresh live queue
+      }
+    } catch (err) {
+      console.error('Failed to return application:', err);
+      alert('Error updating database. Please check if json-server is running.');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="container" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+        <h3>Loading Secretariat Portal...</h3>
+        <p>Connecting to institutional database...</p>
+      </div>
+    );
   }
 
   return (
-    <div className="container">
+    <div className="container" style={{ maxWidth: '1200px' }}>
       
       {/* ========================================================= */}
       {/* VIEW 1: MASTER LIST OF ALL INSTITUTIONAL SUBMISSIONS      */}
@@ -113,41 +137,56 @@ export default function SecretariatDashboard() {
               </p>
             </div>
             <button className="btn" style={{ background: 'var(--bg-app)', border: '1px solid var(--border-color)' }} onClick={fetchSubmissions}>
-              <RefreshCw size={16} /> Refresh List
+              <RefreshCw size={16} /> Refresh Queue
             </button>
           </div>
 
-          <div className="grid-cards">
-            {submissions.map((sub) => (
-              <div key={sub.id} className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                <div>
-                  <div className="flex-between" style={{ marginBottom: '0.75rem' }}>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)' }}>{sub.id}</span>
-                    <span className="badge badge-warning">Stage {sub.currentStage}: {sub.currentStage === 1 ? 'Screening' : 'Evaluation'}</span>
+          {/* Fallback if database is completely empty */}
+          {submissions.length === 0 ? (
+            <div className="card" style={{ textAlign: 'center', padding: '4rem 2rem', color: 'var(--text-muted)' }}>
+              <Inbox size={48} style={{ margin: '0 auto 1rem auto', opacity: 0.5 }} />
+              <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-main)' }}>No Submissions Found</h3>
+              <p style={{ margin: 0 }}>There are currently no research applications waiting in the database queue.</p>
+            </div>
+          ) : (
+            <div className="grid-cards">
+              {submissions.map((sub) => (
+                <div key={sub.id} className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div>
+                    <div className="flex-between" style={{ marginBottom: '0.75rem' }}>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)' }}>{sub.id || 'NO-ID'}</span>
+                      <span className="badge badge-warning">
+                        Stage {sub.currentStage || 1}: {(sub.currentStage || 1) === 1 ? 'Screening' : 'Evaluation'}
+                      </span>
+                    </div>
+                    <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem' }}>{sub.projectTitle || 'Untitled Research Protocol'}</h3>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0 0 0.25rem 0' }}>
+                      <strong>PI:</strong> {sub.applicantName || 'Unknown Applicant'}
+                    </p>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0 0 1.5rem 0' }}>
+                      Submitted: {sub.submissionDate || 'Recently'}
+                    </p>
                   </div>
-                  <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem' }}>{sub.projectTitle}</h3>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0 0 0.25rem 0' }}>
-                    <strong>PI:</strong> {sub.applicantName} ({sub.applicantEmail})
-                  </p>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0 0 1.5rem 0' }}>
-                    Submitted: {sub.submissionDate}
-                  </p>
+                  
+                  <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.8rem', color: sub.requiresRevision ? 'var(--danger)' : 'var(--success)', fontWeight: 600 }}>
+                      {sub.requiresRevision ? '⚠️ Revisions Requested' : (sub.currentStage > 1 ? '✔ Cleared (Day 0)' : 'Pending Screening')}
+                    </span>
+                    <button 
+                      className="btn btn-warning" 
+                      onClick={() => {
+                        setSelectedSubmission(sub);
+                        // Auto-open checklist if it's not an exemption
+                        if (sub.formType !== 'FORM-EXEMPTION') setIsChecklistOpen(true);
+                      }}
+                    >
+                      Manage <ChevronRight size={16} />
+                    </button>
+                  </div>
                 </div>
-                
-                <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.8rem', color: sub.requiresRevision ? 'var(--danger)' : 'var(--success)', fontWeight: 600 }}>
-                    {sub.requiresRevision ? '⚠️ Issues Flagged' : '✔ Files Intact'}
-                  </span>
-                  <button 
-                    className="btn btn-warning" 
-                    onClick={() => setSelectedSubmission(sub)}
-                  >
-                    View Files <ChevronRight size={16} />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </>
       ) : (
         /* ========================================================= */
@@ -157,90 +196,139 @@ export default function SecretariatDashboard() {
           <button 
             className="btn" 
             style={{ marginBottom: '1rem', backgroundColor: 'transparent', paddingLeft: 0, color: 'var(--text-muted)' }}
-            onClick={() => setSelectedSubmission(null)}
+            onClick={() => {
+              setSelectedSubmission(null);
+              setIsChecklistOpen(false);
+            }}
           >
-            <ArrowLeft size={18} /> Back to All Submissions
+            <ArrowLeft size={18} /> Back to Screening Queue
           </button>
 
-          <header className="card">
-            <div className="flex-between">
+          <header className="card" style={{ marginBottom: '1.5rem' }}>
+            <div className="flex-between" style={{ alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
               <div>
                 <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--warning)' }}>EARLY SCREENING AUDIT: {selectedSubmission.id}</span>
-                <h1 style={{ margin: '0.25rem 0' }}>{selectedSubmission.projectTitle}</h1>
+                <h1 style={{ margin: '0.25rem 0' }}>{selectedSubmission.projectTitle || 'Untitled Research Protocol'}</h1>
                 <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                  Applicant: {selectedSubmission.applicantName} | Current Status: <strong>{selectedSubmission.statusLabel}</strong>
+                  Applicant: {selectedSubmission.applicantName || 'N/A'} | Current Status: <strong>{selectedSubmission.statusLabel || 'Pending'}</strong>
                 </p>
               </div>
 
-              {/* Day 0 Stamping Action Button */}
-              {selectedSubmission.currentStage === 1 && !selectedSubmission.requiresRevision && (
-                <button className="btn btn-success" onClick={markDayZero} style={{ padding: '0.75rem 1.25rem' }}>
-                  <UserCheck size={18} /> Confirm Complete (Mark Day 0)
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.75rem' }}>
+                <span className="badge badge-primary" style={{ fontSize: '0.9rem', padding: '0.5rem 1rem' }}>
+                  Stage {selectedSubmission.currentStage || 1} of 5
+                </span>
+                
+                <div style={{ padding: '0.75rem 1rem', backgroundColor: 'var(--primary-light)', borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ color: 'var(--primary)', fontSize: '0.875rem', fontWeight: 500 }}>
+                    Form Type: <strong>{selectedSubmission.formApplied}</strong>
+                  </span>
+                </div>
+
+                <button 
+                  className="btn" 
+                  style={{ backgroundColor: 'var(--bg-app)', border: '1px solid var(--border-color)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                  onClick={() => onViewProtocol && onViewProtocol(selectedSubmission.id)}
+                >
+                  <FileText size={16} color="var(--primary)" /> View Form
                 </button>
-              )}
+              </div>
             </div>
           </header>
 
-          {/* DOCUMENT AUDIT & STATUS TOGGLE TABLE */}
-          <section className="card">
-            <div className="flex-between" style={{ marginBottom: '1rem' }}>
-              <h3 style={{ margin: 0 }}>Submitted Document Audit</h3>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                Click "Toggle Status" to simulate flagging incomplete documents during early screening.
-              </span>
-            </div>
+          {/* SPLIT LAYOUT: Document Table (Left) & Checklist Panel (Right) */}
+          <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+            
+            {/* Left Side: Document Repository Table */}
+            <div className="card" style={{ flex: isChecklistOpen ? '2' : '1', minWidth: '300px', transition: 'all 0.3s', margin: 0 }}>
+              <div className="flex-between" style={{ marginBottom: '1rem' }}>
+                <h3 style={{ margin: 0 }}>Submitted Document Audit</h3>
+                {selectedSubmission.formType !== 'FORM-EXEMPTION' && !isChecklistOpen && (
+                  <button className="btn btn-warning" onClick={() => setIsChecklistOpen(true)}>
+                    <CheckCircle2 size={16} /> Open Screening Checklist
+                  </button>
+                )}
+              </div>
 
-            <div className="table-container">
-              <table className="custom-table">
-                <thead>
-                  <tr>
-                    <th>Document Type</th>
-                    <th>File Name</th>
-                    <th>Upload Date</th>
-                    <th>Current Verification Status</th>
-                    <th>Secretariat Action (Role-Protected)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {selectedSubmission.documents.map((doc) => (
-                    <tr key={doc.id}>
-                      <td style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <FileText size={16} color="var(--text-muted)" />
-                        {doc.type}
-                      </td>
-                      <td style={{ color: 'var(--primary)', fontWeight: 500 }}>{doc.name}</td>
-                      <td style={{ color: 'var(--text-muted)' }}>{doc.uploadDate}</td>
-                      <td>
-                        <span className={`badge ${doc.status === 'Verified' ? 'badge-success' : 'badge-warning'}`}>
-                          {doc.status}
-                        </span>
-                      </td>
-                      <td>
-                        {/* THIS BUTTON IS THE CORE OF YOUR PROTOYPE INTERACTION */}
-                        <button 
-                          className={`btn ${doc.status === 'Verified' ? 'btn-warning' : 'btn-success'}`}
-                          style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
-                          onClick={() => toggleDocumentStatus(doc.id)}
-                        >
-                          {doc.status === 'Verified' ? 'Flag as Incomplete' : 'Mark as Verified'}
-                        </button>
-                      </td>
+              <div className="table-container">
+                <table className="custom-table">
+                  <thead>
+                    <tr>
+                      <th>Document Type</th>
+                      <th>File Name</th>
+                      <th>Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {/* DEFensive fallback: || [] prevents white screen crash if documents is missing */}
+                    {(selectedSubmission.documents || []).length === 0 ? (
+                      <tr>
+                        <td colSpan="3" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                          No documents found attached to this submission.
+                        </td>
+                      </tr>
+                    ) : (
+                      (selectedSubmission.documents || []).map((doc, idx) => (
+                        <tr key={doc.id || idx}>
+                          <td style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <FileText size={16} color="var(--text-muted)" /> {doc.type || 'Attachment'}
+                          </td>
+                          <td style={{ color: 'var(--primary)', fontWeight: 500, maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {doc.name || `File_${idx + 1}.pdf`}
+                          </td>
+                          <td>
+                            <button 
+                              className="btn" 
+                              style={{ padding: '0.25rem 0.5rem', backgroundColor: 'var(--bg-app)', border: '1px solid var(--border-color)' }}
+                              onClick={() => setPreviewDoc(doc)}
+                            >
+                              <Eye size={14} /> Preview
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </section>
 
-          {/* SECRETARIAT SCREENING INSTRUCTIONS */}
-          <div className="card" style={{ backgroundColor: 'var(--bg-app)', border: '1px solid var(--border-color)' }}>
-            <h4 style={{ margin: '0 0 0.5rem 0' }}>Secretariat Workflow Protocol</h4>
-            <ul style={{ margin: 0, paddingLeft: '1.25rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-              <li>If any file is flagged as incomplete, the system automatically marks the application as requiring revision and alerts the PI.</li>
-              <li>Once all documents are verified, click <strong>Confirm Complete (Mark Day 0)</strong> to advance the application to Stage 2 and unlock Evaluator Appointment.</li>
-            </ul>
+            {/* Right Side: Digital Screening Checklist Panel */}
+            {isChecklistOpen && selectedSubmission.formType !== 'FORM-EXEMPTION' && (
+              <div style={{ flex: '1', minWidth: '350px', backgroundColor: '#fff', borderRadius: '8px', border: '1px solid var(--border-color)', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', height: '650px', position: 'sticky', top: '20px' }}>
+                <DocChecklistForm 
+                  formApplied={selectedSubmission.formApplied || 'Exemption Form'}
+                  onMarkDayZero={handleMarkDayZero}
+                  onReturnToApplicant={handleReturnToApplicant}
+                />
+              </div>
+            )}
           </div>
         </>
+      )}
+
+      {/* MOCK PDF PREVIEW MODAL */}
+      {previewDoc && (
+        <div className="modal-overlay" onClick={() => setPreviewDoc(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <FileText color="var(--primary)" size={20} />
+                <h4 style={{ margin: 0 }}>Document Viewer: {previewDoc.name || 'Document Preview'}</h4>
+              </div>
+              <button className="btn" style={{ padding: '0.25rem', background: 'transparent' }} onClick={() => setPreviewDoc(null)}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <div style={{ padding: '3rem', border: '2px dashed var(--border-color)', borderRadius: 'var(--radius-md)', background: '#fff', textAlign: 'center' }}>
+                <FileText size={48} color="var(--text-muted)" style={{ margin: '0 auto 1rem auto' }} />
+                <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-main)' }}>PDF Content Simulator</h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Displaying contents for <strong>{previewDoc.type || 'Attachment'}</strong>.</p>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
     </div>

@@ -61,6 +61,13 @@ export default function RoleNavbar({ user, onLogout, activeTab, setActiveTab }) 
               <li className="nav-item">Archive</li> */}
             </>
           )}
+
+          {user.role === 'dean' && (
+            <>
+              <li className="nav-item active">Pending Endorsements</li>
+              {/* <li className="nav-item">Archive</li> */}
+            </>
+          )}
         </ul>
 
         {/* Right Zone: Authenticated User Profile & Sign Out */}
@@ -110,117 +117,3 @@ export default function RoleNavbar({ user, onLogout, activeTab, setActiveTab }) 
     </nav>
   );
 }
-
-// import React from 'react';
-// import { 
-//   ShieldAlert, 
-//   LayoutDashboard, 
-//   FilePlus, 
-//   FileText, 
-//   Users, 
-//   CheckSquare, 
-//   FolderClock,
-//   User
-// } from 'lucide-react';
-
-// export default function RoleNavbar({ currentRole, setCurrentRole, activeTab, setActiveTab }) {
-  
-//   // Define persona profiles for prototype realism
-//   const personas = {
-//     applicant: { name: 'Dr. Sarah Razak', title: 'Principal Investigator' },
-//     secretariat: { name: 'Nurul Aini', title: 'REC Secretariat Admin' },
-//     committee: { name: 'Prof. Dr. Ariffin', title: 'Panel Reviewer' }
-//   };
-
-//   return (
-//     <nav className="navbar">
-//       <div className="navbar-container">
-        
-//         {/* Left Zone: Brand Logo */}
-//         <div className="navbar-brand">
-//           <span className="navbar-brand-badge">UTM</span>
-//           <span>Research Ethics Portal</span>
-//         </div>
-
-//         {/* Center Zone: Contextual Navigation Links */}
-//         <ul className="nav-links">
-//           {currentRole === 'applicant' && (
-//             <>
-//               <li 
-//                 className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
-//                 onClick={() => setActiveTab('dashboard')}
-//               >
-//                 My Submissions
-//               </li>
-//               <li 
-//                 className={`nav-item ${activeTab === 'new-submission' ? 'active' : ''}`}
-//                 onClick={() => setActiveTab('new-submission')}
-//               >
-//                 + New Application
-//               </li>
-//               <li 
-//                 className={`nav-item ${activeTab === 'guidelines' ? 'active' : ''}`}
-//                 onClick={() => setActiveTab('guidelines')}
-//               >
-//                 Guidelines & Templates
-//               </li>
-//             </>
-//           )}
-
-//           {currentRole === 'secretariat' && (
-//             <>
-//               <li className="nav-item active">Early Screenings (Day 0)</li>
-//               <li className="nav-item">Meeting Agendas</li>
-//               <li className="nav-item">Approval Issuance</li>
-//             </>
-//           )}
-
-//           {currentRole === 'committee' && (
-//             <>
-//               <li className="nav-item active">Assigned Evaluations</li>
-//               <li className="nav-item">Subcommittee Re-reviews</li>
-//               <li className="nav-item">Archive</li>
-//             </>
-//           )}
-//         </ul>
-
-//         {/* Right Zone: Prototype Role Switcher & User Profile */}
-//         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          
-//           <div className="role-switcher">
-//             <button 
-//               className={`role-btn ${currentRole === 'applicant' ? 'active' : ''}`}
-//               onClick={() => { setCurrentRole('applicant'); setActiveTab('dashboard'); }}
-//             >
-//               <User size={14} /> Applicant
-//             </button>
-//             <button 
-//               className={`role-btn ${currentRole === 'secretariat' ? 'active' : ''}`}
-//               onClick={() => { setCurrentRole('secretariat'); setActiveTab('dashboard'); }}
-//             >
-//               <FolderClock size={14} /> Secretariat
-//             </button>
-//             <button 
-//               className={`role-btn ${currentRole === 'committee' ? 'active' : ''}`}
-//               onClick={() => { setCurrentRole('committee'); setActiveTab('dashboard'); }}
-//             >
-//               <CheckSquare size={14} /> Committee
-//             </button>
-//           </div>
-
-//           <div className="user-profile">
-//             <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
-//               {personas[currentRole].name.charAt(0)}
-//             </div>
-//             <div style={{ display: 'flex', flexDirection: 'column' }}>
-//               <span style={{ fontSize: '0.8rem', lineHeight: 1 }}>{personas[currentRole].name}</span>
-//               <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{personas[currentRole].title}</span>
-//             </div>
-//           </div>
-
-//         </div>
-
-//       </div>
-//     </nav>
-//   );
-// }

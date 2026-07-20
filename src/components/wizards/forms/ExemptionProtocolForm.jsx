@@ -1,7 +1,7 @@
 import React from 'react';
-import { UserPlus, Trash2, CheckSquare, Calendar, FileText, ShieldCheck, Mail, Info } from 'lucide-react';
+import { UserPlus, Trash2, ShieldCheck, Mail, Info } from 'lucide-react';
 
-export default function ExemptionProtocolForm({ formData, setFormData }) {
+export default function ExemptionProtocolForm({ formData, setFormData, isReadOnly = false }) {
 
   // ---------------------------------------------------------------------------
   // STATE UPDATER HELPERS
@@ -9,11 +9,13 @@ export default function ExemptionProtocolForm({ formData, setFormData }) {
   
   // Generic top-level field updater
   const updateField = (field, value) => {
+    if (isReadOnly) return;
     setFormData({ ...formData, [field]: value });
   };
 
   // Nested updater for Section B (Executive Summary sub-fields)
   const updateExecSummary = (subField, value) => {
+    if (isReadOnly) return;
     setFormData({
       ...formData,
       execSummaryDetails: {
@@ -25,6 +27,7 @@ export default function ExemptionProtocolForm({ formData, setFormData }) {
 
   // Section A: Co-Investigator Dynamic Array Handlers
   const addCoInvestigator = () => {
+    if (isReadOnly) return;
     const currentList = formData.coInvestigators || [
       { name: '', phone: '', email: '', department: '', faculty: '' }
     ];
@@ -38,6 +41,7 @@ export default function ExemptionProtocolForm({ formData, setFormData }) {
   };
 
   const removeCoInvestigator = (index) => {
+    if (isReadOnly) return;
     const currentList = formData.coInvestigators || [];
     setFormData({
       ...formData,
@@ -46,6 +50,7 @@ export default function ExemptionProtocolForm({ formData, setFormData }) {
   };
 
   const updateCoInvestigator = (index, field, value) => {
+    if (isReadOnly) return;
     const currentList = [...(formData.coInvestigators || [])];
     currentList[index] = { ...currentList[index], [field]: value };
     setFormData({ ...formData, coInvestigators: currentList });
@@ -53,11 +58,33 @@ export default function ExemptionProtocolForm({ formData, setFormData }) {
 
   // Section C: Justification Checkbox Handlers
   const handleToggleJustification = (id) => {
+    if (isReadOnly) return;
     const currentList = formData.exemptionJustifications || [];
     const updatedList = currentList.includes(id)
       ? currentList.filter(item => item !== id)
       : [...currentList, id];
     updateField('exemptionJustifications', updatedList);
+  };
+
+  // ---------------------------------------------------------------------------
+  // COMMON READ-ONLY STYLES
+  // ---------------------------------------------------------------------------
+  const inputStyle = {
+    width: '100%', 
+    padding: isReadOnly ? '0' : '0.6rem', 
+    borderRadius: isReadOnly ? '0' : '4px', 
+    border: isReadOnly ? 'none' : '1px solid var(--border-color)', 
+    boxSizing: 'border-box',
+    backgroundColor: isReadOnly ? 'transparent' : '#fff',
+    color: isReadOnly ? 'var(--text-main)' : 'inherit',
+    fontWeight: isReadOnly ? 600 : 'normal',
+    fontSize: isReadOnly ? '0.9rem' : 'inherit'
+  };
+
+  const textareaStyle = {
+    ...inputStyle,
+    fontFamily: 'inherit',
+    resize: isReadOnly ? 'none' : 'vertical'
   };
 
   // ---------------------------------------------------------------------------
@@ -105,7 +132,8 @@ export default function ExemptionProtocolForm({ formData, setFormData }) {
             <select 
               value={formData.exemptionStudyType || ''} 
               onChange={(e) => updateField('exemptionStudyType', e.target.value)}
-              style={{ width: '100%', padding: '0.6rem', borderRadius: '4px', border: '1px solid var(--border-color)', fontWeight: 600 }}
+              style={{ ...inputStyle, padding: isReadOnly ? '0' : '0.6rem', appearance: isReadOnly ? 'none' : 'auto' }}
+              disabled={isReadOnly}
             >
               <option value="">Select study category...</option>
               <option value="Clinical">Clinical</option>
@@ -120,10 +148,11 @@ export default function ExemptionProtocolForm({ formData, setFormData }) {
             </label>
             <input 
               type="text" 
-              placeholder="Enter exact research title..." 
+              placeholder={isReadOnly ? '' : "Enter exact research title..."}
               value={formData.projectTitle || ''} 
               onChange={(e) => updateField('projectTitle', e.target.value)}
-              style={{ width: '100%', padding: '0.6rem', borderRadius: '4px', border: '1px solid var(--border-color)', boxSizing: 'border-box' }}
+              style={inputStyle}
+              readOnly={isReadOnly}
             />
           </div>
         </div>
@@ -139,17 +168,19 @@ export default function ExemptionProtocolForm({ formData, setFormData }) {
           </h3>
         </div>
 
-        {/* PI Notice Banner */}
-        <div style={{ padding: '0.85rem 1rem', backgroundColor: '#eff6ff', borderRadius: '4px', border: '1px solid #bfdbfe', marginBottom: '1.5rem', display: 'flex', gap: '0.75rem', alignItems: 'flex-start', fontSize: '0.85rem', color: '#1e3a8a' }}>
-          <Info size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
-          <div>
-            <strong>Please note institutional rules for Principal Investigator (PI):</strong>
-            <ul style={{ margin: '0.25rem 0 0 0', paddingLeft: '1.25rem' }}>
-              <li><strong>UTM staff:</strong> PI must be the applicant.</li>
-              <li><strong>For student applications:</strong> PI refers to the supervisor who is a UTM staff member.</li>
-            </ul>
+        {/* PI Notice Banner (Hidden in read-only mode to save space) */}
+        {!isReadOnly && (
+          <div style={{ padding: '0.85rem 1rem', backgroundColor: '#eff6ff', borderRadius: '4px', border: '1px solid #bfdbfe', marginBottom: '1.5rem', display: 'flex', gap: '0.75rem', alignItems: 'flex-start', fontSize: '0.85rem', color: '#1e3a8a' }}>
+            <Info size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
+            <div>
+              <strong>Please note institutional rules for Principal Investigator (PI):</strong>
+              <ul style={{ margin: '0.25rem 0 0 0', paddingLeft: '1.25rem' }}>
+                <li><strong>UTM staff:</strong> PI must be the applicant.</li>
+                <li><strong>For student applications:</strong> PI refers to the supervisor who is a UTM staff member.</li>
+              </ul>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Principal Investigator Fields */}
         <div style={{ padding: '1.25rem', backgroundColor: 'var(--bg-app)', borderRadius: '6px', border: '1px solid var(--border-color)', marginBottom: '1.5rem' }}>
@@ -158,26 +189,26 @@ export default function ExemptionProtocolForm({ formData, setFormData }) {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
             <div>
               <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.35rem' }}>Name</label>
-              <input type="text" value={formData.applicantName || ''} onChange={(e) => updateField('applicantName', e.target.value)} style={{ width: '100%', padding: '0.6rem', borderRadius: '4px', border: '1px solid var(--border-color)', boxSizing: 'border-box' }} />
+              <input type="text" value={formData.applicantName || ''} onChange={(e) => updateField('applicantName', e.target.value)} style={inputStyle} readOnly={isReadOnly} />
             </div>
             <div>
               <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.35rem' }}>Contact Number</label>
-              <input type="text" value={formData.phone || ''} onChange={(e) => updateField('phone', e.target.value)} style={{ width: '100%', padding: '0.6rem', borderRadius: '4px', border: '1px solid var(--border-color)', boxSizing: 'border-box' }} />
+              <input type="text" value={formData.phone || ''} onChange={(e) => updateField('phone', e.target.value)} style={inputStyle} readOnly={isReadOnly} />
             </div>
             <div>
               <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.35rem' }}>Email</label>
-              <input type="email" value={formData.applicantEmail || ''} onChange={(e) => updateField('applicantEmail', e.target.value)} style={{ width: '100%', padding: '0.6rem', borderRadius: '4px', border: '1px solid var(--border-color)', boxSizing: 'border-box' }} />
+              <input type="email" value={formData.applicantEmail || ''} onChange={(e) => updateField('applicantEmail', e.target.value)} style={inputStyle} readOnly={isReadOnly} />
             </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div>
               <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.35rem' }}>Department</label>
-              <input type="text" placeholder="e.g., Department of Software Engineering" value={formData.piDepartment || ''} onChange={(e) => updateField('piDepartment', e.target.value)} style={{ width: '100%', padding: '0.6rem', borderRadius: '4px', border: '1px solid var(--border-color)', boxSizing: 'border-box' }} />
+              <input type="text" placeholder={isReadOnly ? '' : "e.g., Department of Software Engineering"} value={formData.piDepartment || ''} onChange={(e) => updateField('piDepartment', e.target.value)} style={inputStyle} readOnly={isReadOnly} />
             </div>
             <div>
               <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.35rem' }}>Faculty</label>
-              <input type="text" value={formData.faculty || ''} onChange={(e) => updateField('faculty', e.target.value)} style={{ width: '100%', padding: '0.6rem', borderRadius: '4px', border: '1px solid var(--border-color)', boxSizing: 'border-box' }} />
+              <input type="text" value={formData.faculty || ''} onChange={(e) => updateField('faculty', e.target.value)} style={inputStyle} readOnly={isReadOnly} />
             </div>
           </div>
         </div>
@@ -187,16 +218,18 @@ export default function ExemptionProtocolForm({ formData, setFormData }) {
           <div className="flex-between" style={{ marginBottom: '0.75rem' }}>
             <div>
               <h4 style={{ margin: 0, fontSize: '0.95rem' }}>Co-Investigators</h4>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>*Please list all the investigators (if any)</span>
+              {!isReadOnly && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>*Please list all the investigators (if any)</span>}
             </div>
-            <button type="button" onClick={addCoInvestigator} className="btn" style={{ background: '#fff', border: '1px solid var(--primary)', color: 'var(--primary)', fontSize: '0.8rem', padding: '0.4rem 0.75rem' }}>
-              <UserPlus size={14} /> + Add Co-Investigator
-            </button>
+            {!isReadOnly && (
+              <button type="button" onClick={addCoInvestigator} className="btn" style={{ background: '#fff', border: '1px solid var(--primary)', color: 'var(--primary)', fontSize: '0.8rem', padding: '0.4rem 0.75rem' }}>
+                <UserPlus size={14} /> + Add Co-Investigator
+              </button>
+            )}
           </div>
 
           {(!formData.coInvestigators || formData.coInvestigators.length === 0) ? (
             <div style={{ padding: '1.5rem', textAlign: 'center', backgroundColor: 'var(--bg-app)', borderRadius: '4px', border: '1px dashed var(--border-color)', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-              No co-investigators listed. Click "+ Add Co-Investigator" above if this is a team project.
+              No co-investigators listed.
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -205,34 +238,36 @@ export default function ExemptionProtocolForm({ formData, setFormData }) {
                   
                   <div className="flex-between" style={{ marginBottom: '0.75rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
                     <strong style={{ fontSize: '0.85rem', color: 'var(--text-main)' }}>Co-Investigator {idx + 1}</strong>
-                    <button type="button" onClick={() => removeCoInvestigator(idx)} style={{ background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', fontWeight: 600 }}>
-                      <Trash2 size={14} /> Remove
-                    </button>
+                    {!isReadOnly && (
+                      <button type="button" onClick={() => removeCoInvestigator(idx)} style={{ background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', fontWeight: 600 }}>
+                        <Trash2 size={14} /> Remove
+                      </button>
+                    )}
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
                     <div>
                       <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Name</label>
-                      <input type="text" placeholder="Full Name" value={coInv.name} onChange={(e) => updateCoInvestigator(idx, 'name', e.target.value)} style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border-color)', boxSizing: 'border-box' }} />
+                      <input type="text" placeholder={isReadOnly ? '' : "Full Name"} value={coInv.name} onChange={(e) => updateCoInvestigator(idx, 'name', e.target.value)} style={{ ...inputStyle, padding: isReadOnly ? '0' : '0.5rem' }} readOnly={isReadOnly} />
                     </div>
                     <div>
                       <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Contact Number</label>
-                      <input type="text" placeholder="Phone Number" value={coInv.phone} onChange={(e) => updateCoInvestigator(idx, 'phone', e.target.value)} style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border-color)', boxSizing: 'border-box' }} />
+                      <input type="text" placeholder={isReadOnly ? '' : "Phone Number"} value={coInv.phone} onChange={(e) => updateCoInvestigator(idx, 'phone', e.target.value)} style={{ ...inputStyle, padding: isReadOnly ? '0' : '0.5rem' }} readOnly={isReadOnly} />
                     </div>
                     <div>
                       <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Email</label>
-                      <input type="email" placeholder="Email Address" value={coInv.email} onChange={(e) => updateCoInvestigator(idx, 'email', e.target.value)} style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border-color)', boxSizing: 'border-box' }} />
+                      <input type="email" placeholder={isReadOnly ? '' : "Email Address"} value={coInv.email} onChange={(e) => updateCoInvestigator(idx, 'email', e.target.value)} style={{ ...inputStyle, padding: isReadOnly ? '0' : '0.5rem' }} readOnly={isReadOnly} />
                     </div>
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                     <div>
                       <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Department</label>
-                      <input type="text" placeholder="Department" value={coInv.department} onChange={(e) => updateCoInvestigator(idx, 'department', e.target.value)} style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border-color)', boxSizing: 'border-box' }} />
+                      <input type="text" placeholder={isReadOnly ? '' : "Department"} value={coInv.department} onChange={(e) => updateCoInvestigator(idx, 'department', e.target.value)} style={{ ...inputStyle, padding: isReadOnly ? '0' : '0.5rem' }} readOnly={isReadOnly} />
                     </div>
                     <div>
                       <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Faculty</label>
-                      <input type="text" placeholder="Faculty" value={coInv.faculty} onChange={(e) => updateCoInvestigator(idx, 'faculty', e.target.value)} style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border-color)', boxSizing: 'border-box' }} />
+                      <input type="text" placeholder={isReadOnly ? '' : "Faculty"} value={coInv.faculty} onChange={(e) => updateCoInvestigator(idx, 'faculty', e.target.value)} style={{ ...inputStyle, padding: isReadOnly ? '0' : '0.5rem' }} readOnly={isReadOnly} />
                     </div>
                   </div>
 
@@ -253,15 +288,16 @@ export default function ExemptionProtocolForm({ formData, setFormData }) {
           </h3>
         </div>
 
-        {/* 1.0 Research Overview & 1.1 Executive Summary (Verbatim 5 Sub-fields) */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '2rem' }}>
           <div>
             <h4 style={{ margin: '0 0 0.25rem 0', fontSize: '0.95rem', color: 'var(--text-main)' }}>
-              1.0 Research Overview & 1.1 Executive Summary *
+              1.0 Research Overview & 1.1 Executive Summary
             </h4>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0 0 1rem 0' }}>
-              Please include the problem statement, objectives, research methodology, expected output/outcomes/implication, and significance output from the research project (approximately 350 words total across all sections).
-            </p>
+            {!isReadOnly && (
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0 0 1rem 0' }}>
+                Please include the problem statement, objectives, research methodology, expected output/outcomes/implication, and significance output from the research project.
+              </p>
+            )}
           </div>
 
           <div>
@@ -269,11 +305,12 @@ export default function ExemptionProtocolForm({ formData, setFormData }) {
               1.1.1 Problem Statement *
             </label>
             <textarea 
-              rows={3} 
-              placeholder="State the core research problem or knowledge gap..."
+              rows={isReadOnly ? undefined : 3} 
+              placeholder={isReadOnly ? '' : "State the core research problem or knowledge gap..."}
               value={formData.execSummaryDetails?.problemStatement || ''} 
               onChange={(e) => updateExecSummary('problemStatement', e.target.value)}
-              style={{ width: '100%', padding: '0.6rem', borderRadius: '4px', border: '1px solid var(--border-color)', fontFamily: 'inherit', boxSizing: 'border-box' }}
+              style={textareaStyle}
+              readOnly={isReadOnly}
             />
           </div>
 
@@ -282,11 +319,12 @@ export default function ExemptionProtocolForm({ formData, setFormData }) {
               1.1.2 Objectives *
             </label>
             <textarea 
-              rows={3} 
-              placeholder="List the general and specific research objectives..."
+              rows={isReadOnly ? undefined : 3} 
+              placeholder={isReadOnly ? '' : "List the general and specific research objectives..."}
               value={formData.execSummaryDetails?.objectives || ''} 
               onChange={(e) => updateExecSummary('objectives', e.target.value)}
-              style={{ width: '100%', padding: '0.6rem', borderRadius: '4px', border: '1px solid var(--border-color)', fontFamily: 'inherit', boxSizing: 'border-box' }}
+              style={textareaStyle}
+              readOnly={isReadOnly}
             />
           </div>
 
@@ -295,11 +333,12 @@ export default function ExemptionProtocolForm({ formData, setFormData }) {
               1.1.3 Research Methodology *
             </label>
             <textarea 
-              rows={4} 
-              placeholder="Detail your research design, data sources, and analytical frameworks..."
+              rows={isReadOnly ? undefined : 4} 
+              placeholder={isReadOnly ? '' : "Detail your research design, data sources, and analytical frameworks..."}
               value={formData.execSummaryDetails?.methodology || ''} 
               onChange={(e) => updateExecSummary('methodology', e.target.value)}
-              style={{ width: '100%', padding: '0.6rem', borderRadius: '4px', border: '1px solid var(--border-color)', fontFamily: 'inherit', boxSizing: 'border-box' }}
+              style={textareaStyle}
+              readOnly={isReadOnly}
             />
           </div>
 
@@ -308,11 +347,12 @@ export default function ExemptionProtocolForm({ formData, setFormData }) {
               1.1.4 Expected Output / Outcomes / Implication *
             </label>
             <textarea 
-              rows={3} 
-              placeholder="Describe expected deliverables and theoretical/practical implications..."
+              rows={isReadOnly ? undefined : 3} 
+              placeholder={isReadOnly ? '' : "Describe expected deliverables and theoretical/practical implications..."}
               value={formData.execSummaryDetails?.expectedOutcomes || ''} 
               onChange={(e) => updateExecSummary('expectedOutcomes', e.target.value)}
-              style={{ width: '100%', padding: '0.6rem', borderRadius: '4px', border: '1px solid var(--border-color)', fontFamily: 'inherit', boxSizing: 'border-box' }}
+              style={textareaStyle}
+              readOnly={isReadOnly}
             />
           </div>
 
@@ -321,75 +361,68 @@ export default function ExemptionProtocolForm({ formData, setFormData }) {
               1.1.5 Significance Output from the Research Project *
             </label>
             <textarea 
-              rows={3} 
-              placeholder="Explain the broader impact and value to the field or society..."
+              rows={isReadOnly ? undefined : 3} 
+              placeholder={isReadOnly ? '' : "Explain the broader impact and value to the field or society..."}
               value={formData.execSummaryDetails?.significance || ''} 
               onChange={(e) => updateExecSummary('significance', e.target.value)}
-              style={{ width: '100%', padding: '0.6rem', borderRadius: '4px', border: '1px solid var(--border-color)', fontFamily: 'inherit', boxSizing: 'border-box' }}
+              style={textareaStyle}
+              readOnly={isReadOnly}
             />
           </div>
         </div>
 
-        {/* 1.2 through 1.5 Timelines */}
+        {/* Timelines */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', backgroundColor: 'var(--bg-app)', padding: '1.25rem', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
           <div>
             <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.35rem' }}>
               1.2 Start Date of Research *
             </label>
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-              <Calendar size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '10px' }} />
-              <input 
-                type="date" 
-                value={formData.researchStartDate || ''} 
-                onChange={(e) => updateField('researchStartDate', e.target.value)}
-                style={{ width: '100%', padding: '0.5rem 0.5rem 0.5rem 2.25rem', borderRadius: '4px', border: '1px solid var(--border-color)', boxSizing: 'border-box' }} 
-              />
-            </div>
+            {!isReadOnly ? (
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <input type="date" value={formData.researchStartDate || ''} onChange={(e) => updateField('researchStartDate', e.target.value)} style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border-color)', boxSizing: 'border-box' }} />
+              </div>
+            ) : (
+               <div style={inputStyle}>{formData.researchStartDate || '-'}</div>
+            )}
           </div>
 
           <div>
             <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.35rem' }}>
               1.3 End Date of Research *
             </label>
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-              <Calendar size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '10px' }} />
-              <input 
-                type="date" 
-                value={formData.researchEndDate || ''} 
-                onChange={(e) => updateField('researchEndDate', e.target.value)}
-                style={{ width: '100%', padding: '0.5rem 0.5rem 0.5rem 2.25rem', borderRadius: '4px', border: '1px solid var(--border-color)', boxSizing: 'border-box' }} 
-              />
-            </div>
+             {!isReadOnly ? (
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <input type="date" value={formData.researchEndDate || ''} onChange={(e) => updateField('researchEndDate', e.target.value)} style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border-color)', boxSizing: 'border-box' }} />
+              </div>
+            ) : (
+               <div style={inputStyle}>{formData.researchEndDate || '-'}</div>
+            )}
           </div>
 
           <div>
             <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.35rem' }}>
               1.4 Proposed Start Date of Data Collection *
             </label>
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-              <Calendar size={16} color="var(--primary)" style={{ position: 'absolute', left: '10px' }} />
-              <input 
-                type="date" 
-                value={formData.dataCollectionStart || ''} 
-                onChange={(e) => updateField('dataCollectionStart', e.target.value)}
-                style={{ width: '100%', padding: '0.5rem 0.5rem 0.5rem 2.25rem', borderRadius: '4px', border: '1px solid var(--primary)', boxSizing: 'border-box' }} 
-              />
-            </div>
+            {!isReadOnly ? (
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <input type="date" value={formData.dataCollectionStart || ''} onChange={(e) => updateField('dataCollectionStart', e.target.value)} style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--primary)', boxSizing: 'border-box' }} />
+              </div>
+            ) : (
+               <div style={inputStyle}>{formData.dataCollectionStart || '-'}</div>
+            )}
           </div>
 
           <div>
             <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.35rem' }}>
               1.5 Proposed Completion Date of Data Collection *
             </label>
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-              <Calendar size={16} color="var(--primary)" style={{ position: 'absolute', left: '10px' }} />
-              <input 
-                type="date" 
-                value={formData.dataCollectionEnd || ''} 
-                onChange={(e) => updateField('dataCollectionEnd', e.target.value)}
-                style={{ width: '100%', padding: '0.5rem 0.5rem 0.5rem 2.25rem', borderRadius: '4px', border: '1px solid var(--primary)', boxSizing: 'border-box' }} 
-              />
-            </div>
+            {!isReadOnly ? (
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <input type="date" value={formData.dataCollectionEnd || ''} onChange={(e) => updateField('dataCollectionEnd', e.target.value)} style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--primary)', boxSizing: 'border-box' }} />
+              </div>
+             ) : (
+               <div style={inputStyle}>{formData.dataCollectionEnd || '-'}</div>
+            )}
           </div>
         </div>
       </section>
@@ -407,73 +440,77 @@ export default function ExemptionProtocolForm({ formData, setFormData }) {
               Selected: {(formData.exemptionJustifications || []).length}
             </span>
           </div>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-            Tick where applicable, can be more than one *
-          </span>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'var(--bg-app)', padding: '1.25rem', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
-          {justificationOptions.map((opt) => {
-            const isChecked = (formData.exemptionJustifications || []).includes(opt.id);
-            return (
+          {/* If read-only, filter out unselected options to keep the view clean */}
+          {justificationOptions
+            .filter(opt => !isReadOnly || (formData.exemptionJustifications || []).includes(opt.id))
+            .map((opt) => {
+              const isChecked = (formData.exemptionJustifications || []).includes(opt.id);
+              return (
+                <label 
+                  key={opt.id}
+                  onClick={() => handleToggleJustification(opt.id)}
+                  style={{ 
+                    display: 'flex', 
+                    alignItems: 'flex-start', 
+                    gap: '0.75rem', 
+                    padding: isReadOnly ? '0 0 0.5rem 0' : '0.85rem 1rem', 
+                    background: isReadOnly ? 'transparent' : (isChecked ? '#fff' : 'transparent'),
+                    borderRadius: '4px', 
+                    border: isReadOnly ? 'none' : (isChecked ? '1px solid var(--primary)' : '1px solid transparent'),
+                    cursor: isReadOnly ? 'default' : 'pointer', 
+                    transition: 'all 0.2s',
+                    fontSize: '0.875rem',
+                    lineHeight: 1.4,
+                    color: isReadOnly ? 'inherit' : (isChecked ? 'var(--primary)' : 'var(--text-main)'),
+                    fontWeight: isChecked ? 600 : 400,
+                  }}
+                >
+                  <input 
+                    type="checkbox" 
+                    checked={isChecked} 
+                    onChange={() => {}} 
+                    disabled={isReadOnly}
+                    style={{ marginTop: '2px', accentColor: 'var(--primary)', width: '16px', height: '16px', flexShrink: 0 }}
+                  />
+                  <span>{opt.label}</span>
+                </label>
+              );
+          })}
+
+          {/* Item 12: Others */}
+          {(!isReadOnly || (formData.exemptionJustifications || []).includes('opt-others')) && (
+            <div style={{ padding: isReadOnly ? '0' : '0.85rem 1rem', background: isReadOnly ? 'transparent' : ((formData.exemptionJustifications || []).includes('opt-others') ? '#fff' : 'transparent'), borderRadius: '4px', border: isReadOnly ? 'none' : ((formData.exemptionJustifications || []).includes('opt-others') ? '1px solid var(--primary)' : '1px solid transparent') }}>
               <label 
-                key={opt.id}
-                onClick={() => handleToggleJustification(opt.id)}
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'flex-start', 
-                  gap: '0.75rem', 
-                  padding: '0.85rem 1rem', 
-                  background: isChecked ? '#fff' : 'transparent',
-                  borderRadius: '4px', 
-                  border: isChecked ? '1px solid var(--primary)' : '1px solid transparent',
-                  cursor: 'pointer', 
-                  transition: 'all 0.2s',
-                  fontSize: '0.875rem',
-                  lineHeight: 1.4,
-                  color: isChecked ? 'var(--primary)' : 'var(--text-main)',
-                  fontWeight: isChecked ? 600 : 400,
-                  boxShadow: isChecked ? 'var(--shadow-sm)' : 'none'
-                }}
+                onClick={() => handleToggleJustification('opt-others')}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: isReadOnly ? 'default' : 'pointer', fontSize: '0.875rem', fontWeight: (formData.exemptionJustifications || []).includes('opt-others') ? 600 : 400, color: isReadOnly ? 'inherit' : ((formData.exemptionJustifications || []).includes('opt-others') ? 'var(--primary)' : 'var(--text-main)'), marginBottom: '0.5rem' }}
               >
                 <input 
                   type="checkbox" 
-                  checked={isChecked} 
-                  onChange={() => {}} // Handled by parent label click
-                  style={{ marginTop: '2px', accentColor: 'var(--primary)', width: '16px', height: '16px', cursor: 'pointer', flexShrink: 0 }}
+                  checked={(formData.exemptionJustifications || []).includes('opt-others')} 
+                  onChange={() => {}} 
+                  disabled={isReadOnly}
+                  style={{ accentColor: 'var(--primary)', width: '16px', height: '16px' }}
                 />
-                <span>{opt.label}</span>
+                <span>Others (provide details):</span>
               </label>
-            );
-          })}
 
-          {/* Verbatim Item 12: Others (provide details) */}
-          <div style={{ padding: '0.85rem 1rem', background: (formData.exemptionJustifications || []).includes('opt-others') ? '#fff' : 'transparent', borderRadius: '4px', border: (formData.exemptionJustifications || []).includes('opt-others') ? '1px solid var(--primary)' : '1px solid transparent' }}>
-            <label 
-              onClick={() => handleToggleJustification('opt-others')}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontSize: '0.875rem', fontWeight: (formData.exemptionJustifications || []).includes('opt-others') ? 600 : 400, color: (formData.exemptionJustifications || []).includes('opt-others') ? 'var(--primary)' : 'var(--text-main)', marginBottom: '0.5rem' }}
-            >
-              <input 
-                type="checkbox" 
-                checked={(formData.exemptionJustifications || []).includes('opt-others')} 
-                onChange={() => {}} 
-                style={{ accentColor: 'var(--primary)', width: '16px', height: '16px', cursor: 'pointer' }}
-              />
-              <span>Others (provide details):</span>
-            </label>
-
-            {(formData.exemptionJustifications || []).includes('opt-others') && (
-              <div style={{ paddingLeft: '1.75rem', marginTop: '0.5rem' }}>
-                <textarea 
-                  rows={2} 
-                  placeholder="Provide specific details regarding your exemption justification..."
-                  value={formData.exemptionOtherDetails || ''}
-                  onChange={(e) => updateField('exemptionOtherDetails', e.target.value)}
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border-color)', fontSize: '0.85rem', fontFamily: 'inherit', boxSizing: 'border-box' }}
-                />
-              </div>
-            )}
-          </div>
+              {(formData.exemptionJustifications || []).includes('opt-others') && (
+                <div style={{ paddingLeft: '1.75rem', marginTop: '0.5rem' }}>
+                  <textarea 
+                    rows={isReadOnly ? undefined : 2} 
+                    placeholder={isReadOnly ? '' : "Provide specific details regarding your exemption justification..."}
+                    value={formData.exemptionOtherDetails || ''}
+                    onChange={(e) => updateField('exemptionOtherDetails', e.target.value)}
+                    style={textareaStyle}
+                    readOnly={isReadOnly}
+                  />
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </section>
 
@@ -489,26 +526,23 @@ export default function ExemptionProtocolForm({ formData, setFormData }) {
 
         <div style={{ padding: '1.25rem', backgroundColor: 'var(--bg-app)', borderRadius: '6px', border: '1px solid var(--border-color)', marginBottom: '1.5rem' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.875rem', color: 'var(--text-main)', lineHeight: 1.5, marginBottom: '1.25rem' }}>
-            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', cursor: 'pointer' }}>
-              <input type="checkbox" checked={formData.piDeclarationA || false} onChange={(e) => updateField('piDeclarationA', e.target.checked)} style={{ marginTop: '3px', accentColor: 'var(--success)', width: '16px', height: '16px' }} />
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', cursor: isReadOnly ? 'default' : 'pointer' }}>
+              <input type="checkbox" checked={formData.piDeclarationA || false} onChange={(e) => updateField('piDeclarationA', e.target.checked)} disabled={isReadOnly} style={{ marginTop: '3px', accentColor: 'var(--success)', width: '16px', height: '16px' }} />
               <span><strong>a.</strong> I certify that the information provided in this application is complete and accurate.</span>
             </label>
-            
-            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', cursor: 'pointer' }}>
-              <input type="checkbox" checked={formData.piDeclarationB || false} onChange={(e) => updateField('piDeclarationB', e.target.checked)} style={{ marginTop: '3px', accentColor: 'var(--success)', width: '16px', height: '16px' }} />
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', cursor: isReadOnly ? 'default' : 'pointer' }}>
+              <input type="checkbox" checked={formData.piDeclarationB || false} onChange={(e) => updateField('piDeclarationB', e.target.checked)} disabled={isReadOnly} style={{ marginTop: '3px', accentColor: 'var(--success)', width: '16px', height: '16px' }} />
               <span><strong>b.</strong> I confirm that to the best of my knowledge, and based on the answers I have provided in this form, this project qualifies for exemption from ethics committee review.</span>
             </label>
-            
-            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', cursor: 'pointer' }}>
-              <input type="checkbox" checked={formData.piDeclarationC || false} onChange={(e) => updateField('piDeclarationC', e.target.checked)} style={{ marginTop: '3px', accentColor: 'var(--success)', width: '16px', height: '16px' }} />
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', cursor: isReadOnly ? 'default' : 'pointer' }}>
+              <input type="checkbox" checked={formData.piDeclarationC || false} onChange={(e) => updateField('piDeclarationC', e.target.checked)} disabled={isReadOnly} style={{ marginTop: '3px', accentColor: 'var(--success)', width: '16px', height: '16px' }} />
               <span><strong>c.</strong> I agree to comply with all UTM’s policies and procedures, as well as with all applicable regulatory requirements and laws, regarding the protection of human participants in research.</span>
             </label>
           </div>
 
-          {/* Digital Signature Simulation Box */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', borderTop: '1px dashed var(--border-color)', paddingTop: '1rem', alignItems: 'center' }}>
             <div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Digital Signature (Auto-bound)</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Digital Signature</span>
               <strong style={{ color: 'var(--success)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                 <ShieldCheck size={16} /> Verified PI Session
               </strong>
@@ -531,7 +565,7 @@ export default function ExemptionProtocolForm({ formData, setFormData }) {
       <section>
         <div style={{ borderBottom: '2px solid var(--primary)', paddingBottom: '0.5rem', marginBottom: '1.25rem' }}>
           <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-main)', textTransform: 'uppercase' }}>
-            Section E: Verification By Dean / Deputy Dean / Chair of School / Director
+            Section E: Institutional Verification
           </h3>
         </div>
 
@@ -540,40 +574,20 @@ export default function ExemptionProtocolForm({ formData, setFormData }) {
             <Mail size={18} /> Automated Institutional Endorsement Routing
           </h4>
           
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0 0 1rem 0', lineHeight: 1.4 }}>
-            In accordance with Section E requirements, the official listed below will be required to digitally verify the following statements upon submission:
-          </p>
-
-          <ul style={{ margin: '0 0 1.25rem 0', paddingLeft: '1.5rem', fontSize: '0.85rem', color: '#1e3a8a', lineHeight: 1.5 }}>
-            <li><em>"I have reviewed this application and determined that all applicable departmental requirements are met."</em></li>
-            <li><em>"The investigator is qualified by education, training, and experience to assume responsibility for the proper conduct of the study."</em></li>
-          </ul>
-
           <div>
             <label style={{ display: 'block', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-main)', marginBottom: '0.35rem' }}>
-              Supervisor (for students) / Dean Official Institutional Email *
+              Target Authority Email
             </label>
             <input 
               type="email" 
-              placeholder="e.g., dean.computing@utm.my / supervisor@utm.my" 
               value={formData.routingEmail || ''} 
               onChange={(e) => updateField('routingEmail', e.target.value)} 
-              style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--border-color)', fontSize: '0.9rem', background: '#fff', boxSizing: 'border-box' }} 
+              style={{ ...inputStyle, padding: isReadOnly ? '0' : '0.75rem', background: isReadOnly ? 'transparent' : '#fff' }} 
+              readOnly={isReadOnly}
             />
-            <span style={{ fontSize: '0.75rem', color: 'var(--primary)', display: 'block', marginTop: '0.35rem' }}>
-              ⚡ Upon clicking Submit on Step 5, an automated verification token will be dispatched to this address to fulfill Section E sign-off.
-            </span>
           </div>
         </div>
       </section>
-
-      {/* --------------------------------------------------------------------- */}
-      {/* FOR UTM REC USE (ADMIN ONLY NOTE) */}
-      {/* --------------------------------------------------------------------- */}
-      <div style={{ padding: '0.75rem 1rem', background: '#f3f4f6', borderRadius: '4px', border: '1px dashed #9ca3af', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: '#6b7280' }}>
-        <span><strong>For UTM REC Use Section:</strong> Stamp, Received Date, and Chairperson Approval Status (Approved/Not Approved) are isolated to the Secretariat Admin Dashboard.</span>
-        <span>Mukasurat / 1 | Pindaan: 1 | Tarikh: 01/4/2026</span>
-      </div>
 
     </div>
   );
