@@ -33,7 +33,7 @@ export default function ApplicantDashboard({ user, onStartNew, onViewProtocol })
   const stages = [
     { number: 1, label: 'Application' },
     { number: 2, label: 'Evaluation' },
-    { number: 3, label: 'Decision' },
+    { number: 3, label: 'Decision: Waiting for Sub-committee Meeting' },
     { number: 4, label: 'Approval Period' },
     { number: 5, label: 'Closure' }
   ];
@@ -292,6 +292,7 @@ export default function ApplicantDashboard({ user, onStartNew, onViewProtocol })
           )}
 
           {/* DOCUMENT REPOSITORY TABLE */}
+          {/* DOCUMENT REPOSITORY TABLE */}
           <section className="card">
             <h3 style={{ marginTop: 0, marginBottom: '1rem' }}>Submitted Files Repository</h3>
             <div className="table-container">
@@ -306,16 +307,31 @@ export default function ApplicantDashboard({ user, onStartNew, onViewProtocol })
                   </tr>
                 </thead>
                 <tbody>
-                  {selectedSubmission.documents?.map((doc) => (
+                  {/* 1. Create a dynamic list combining existing docs + the Approval Letter */}
+                  {(() => {
+                    const docs = [...(selectedSubmission.documents || [])];
+                    
+                    // If an approval letter exists, inject it into the list
+                    if (selectedSubmission.approvalLetterName) {
+                      docs.push({
+                        id: 'approval-letter-001',
+                        type: 'Approval Letter',
+                        name: selectedSubmission.approvalLetterName,
+                        uploadDate: 'Finalized',
+                        status: 'Approved'
+                      });
+                    }
+                    return docs;
+                  })().map((doc) => (
                     <tr key={doc.id}>
                       <td style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <FileText size={16} color="var(--text-muted)" />
+                        <FileText size={16} color={doc.type === 'Approval Letter' ? 'var(--primary)' : 'var(--text-muted)'} />
                         {doc.type}
                       </td>
                       <td style={{ color: 'var(--primary)', fontWeight: 500 }}>{doc.name}</td>
                       <td style={{ color: 'var(--text-muted)' }}>{doc.uploadDate}</td>
                       <td>
-                        <span className={`badge ${doc.status === 'Verified' || doc.status === 'Verified Paid' ? 'badge-success' : 'badge-warning'}`}>
+                        <span className={`badge ${doc.status === 'Approved' ? 'badge-success' : 'badge-warning'}`}>
                           {doc.status}
                         </span>
                       </td>

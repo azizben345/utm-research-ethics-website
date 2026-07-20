@@ -196,6 +196,18 @@ export default function LoginPage({ onLogin }) {
 
             <button 
               type="button"
+              onClick={() => handleDemoLogin('anis@utm.my')}
+              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', background: '#fff', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}
+            >
+              <div>
+                <strong style={{ fontSize: '0.85rem', color: 'var(--text-main)', display: 'block' }}>Prof. Dr. Anis</strong>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Role: Committee Member</span>
+              </div>
+              <span className="badge badge-purple">Panel</span>
+            </button>
+
+            <button 
+              type="button"
               onClick={() => handleDemoLogin('dean.computing@utm.my')}
               style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', background: '#fff', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}
             >

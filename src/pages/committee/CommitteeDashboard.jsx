@@ -12,6 +12,7 @@ import {
   HelpCircle,
   Inbox
 } from 'lucide-react';
+import EvaluatorChecklistForm from '../../components/wizards/forms/EvaluatorChecklistForm';
 
 // 1. HARD-CODED MOCK DATA FOR EVALUATOR DEMO
 const MOCK_COMMITTEE_SUBMISSIONS = [
@@ -59,14 +60,20 @@ export default function CommitteeDashboard({ user, onViewProtocol }) {
       .then((res) => res.json())
       .then((data) => {
         const safeData = Array.isArray(data) ? data : [];
-        // Filter for applications currently in Stage 2 (Evaluation)
-        const stage2Submissions = safeData.filter(s => (s.currentStage || 1) === 2);
-        setSubmissions(stage2Submissions.length > 0 ? stage2Submissions : MOCK_COMMITTEE_SUBMISSIONS);
+        
+        // FILTER LOGIC:
+        // 1. Must be in Stage 2 (Evaluation)
+        // 2. Must contain the logged-in user's email in the assignedEvaluators list
+        const myAssignedSubmissions = safeData.filter(s => 
+          (s.currentStage === 2) && 
+          (s.assignedEvaluators && s.assignedEvaluators.some(e => e.email === user.email))
+        );
+        
+        setSubmissions(myAssignedSubmissions);
         setLoading(false);
       })
       .catch((err) => {
-        console.error('Database unreachable, defaulting to demo mock data:', err);
-        setSubmissions(MOCK_COMMITTEE_SUBMISSIONS);
+        console.error('Database unreachable:', err);
         setLoading(false);
       });
   };
@@ -261,92 +268,29 @@ export default function CommitteeDashboard({ user, onViewProtocol }) {
             </div>
 
             {/* Right Column: Digital Form 1.8 Evaluation Rubric */}
-            <div className="card" style={{ flex: '1.2', minWidth: '350px', margin: 0, backgroundColor: '#fff', border: '1px solid var(--border-color)' }}>
-              <div style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem', marginBottom: '1.25rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#8b5cf6', marginBottom: '0.25rem' }}>
-                  <ClipboardCheck size={22} />
-                  <h3 style={{ margin: 0 }}>Form 1.8: Panel Evaluation Rubric</h3>
-                </div>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                  Complete all ethical appraisal criteria to formulate your recommendation to the subcommittee.
-                </span>
-              </div>
-
-              {/* Rubric Criteria Toggles */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '1.5rem' }}>
-                
-                {[
-                  { id: 'scientificMerit', label: '1. Scientific Merit & Methodology Validity' },
-                  { id: 'participantConsent', label: '2. Informed Consent Process & Information Sheet Clear' },
-                  { id: 'riskBenefitRatio', label: '3. Risk-Benefit Ratio & Participant Protection Adequacy' },
-                  { id: 'dataPrivacy', label: '4. Data Privacy, Anonymization & Security Protocol' }
-                ].map((crit) => (
-                  <div key={crit.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', paddingBottom: '0.75rem', borderBottom: '1px dashed var(--border-color)' }}>
-                    <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-main)' }}>{crit.label}</span>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      {['Satisfactory', 'Needs Revision', 'N/A'].map((opt) => (
-                        <button
-                          key={opt}
-                          type="button"
-                          onClick={() => updateRubric(crit.id, opt)}
-                          style={{
-                            padding: '0.35rem 0.65rem',
-                            fontSize: '0.75rem',
-                            fontWeight: 600,
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            border: evaluation[crit.id] === opt ? '1px solid #8b5cf6' : '1px solid var(--border-color)',
-                            backgroundColor: evaluation[crit.id] === opt ? '#f3e8ff' : '#fff',
-                            color: evaluation[crit.id] === opt ? '#6b21a8' : 'var(--text-muted)'
-                          }}
-                        >
-                          {opt}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-
-              </div>
-
-              {/* Reviewer Feedback Comments */}
-              <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.35rem' }}>
-                  Panel Feedback / Revision Requests (Optional)
-                </label>
-                <textarea 
-                  rows={3}
-                  placeholder="Detail specific ethical concerns, methodological flaws, or required document amendments..."
-                  value={evaluation.comments}
-                  onChange={(e) => updateRubric('comments', e.target.value)}
-                  style={{ width: '100%', padding: '0.6rem', borderRadius: '4px', border: '1px solid var(--border-color)', fontFamily: 'inherit', fontSize: '0.875rem', boxSizing: 'border-box' }}
-                />
-              </div>
-
-              {/* FINAL VERDICT SELECTION */}
-              <div style={{ padding: '1.25rem', backgroundColor: '#f9fafb', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.5rem', textTransform: 'uppercase' }}>
-                  Subcommittee Recommendation Verdict *
-                </label>
-                
-                <select 
-                  value={evaluation.recommendation}
-                  onChange={(e) => updateRubric('recommendation', e.target.value)}
-                  style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '2px solid #8b5cf6', fontWeight: 700, fontSize: '0.95rem', color: '#6b21a8', backgroundColor: '#fff', marginBottom: '1rem', cursor: 'pointer' }}
-                >
-                  <option value="Recommend Approval">✔ Recommend for Approval (Proceed to Stage 3 Decision)</option>
-                  <option value="Revision Required">⚠️ Revision Required (Return to Applicant via Secretariat)</option>
-                </select>
-
-                <button 
-                  className="btn"
-                  style={{ width: '100%', padding: '0.85rem', justifyContent: 'center', backgroundColor: '#8b5cf6', color: '#fff', fontWeight: 700, fontSize: '1rem', boxShadow: '0 4px 6px -1px rgba(139, 92, 246, 0.4)' }}
-                  onClick={handleSumbitEvaluation}
-                >
-                  Submit Official Panel Evaluation
-                </button>
-              </div>
-
+            <div className="card" style={{ flex: '1.2', minWidth: '350px' }}>
+            <EvaluatorChecklistForm 
+                formApplied={selectedSubmission.formApplied} 
+                onSubmit={(evaluationData) => {
+                    // 1. Prepare Payload
+                    const updatedPayload = {
+                        ...selectedSubmission,
+                        currentStage: 4, // Moving to Stage 4 Decision
+                        statusLabel: 'Evaluated',
+                        panelEvaluationResult: evaluationData // Stores the form answers in the DB
+                    };
+                    
+                    // 2. Perform live update
+                    fetch(`http://localhost:3001/submissions/${selectedSubmission.id}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(updatedPayload)
+                    }).then(() => {
+                        alert("Evaluation submitted to Secretariat!");
+                        setSelectedSubmission(null);
+                    });
+                }} 
+            />
             </div>
 
           </div>

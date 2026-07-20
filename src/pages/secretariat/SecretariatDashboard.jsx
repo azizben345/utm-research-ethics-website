@@ -8,14 +8,19 @@ import {
   RefreshCw,
   Eye,
   X,
-  Inbox
+  Inbox,
+  Users,
+  UserPlus,
+  Trash2
 } from 'lucide-react';
 import DocChecklistForm from '../../components/wizards/forms/DocChecklistForm'; // Ensure this path matches your project structure
 
 export default function SecretariatDashboard({ user, onViewProtocol }) {
   // 1. Initialize with an empty array for live backend data
   const [submissions, setSubmissions] = useState([]);
-  const [selectedSubmission, setSelectedSubmission] = useState(null);
+  const [selectedSubmission, setSelectedSubmission] = useState([]);
+  const [selectedEvaluatorEmail, setSelectedEvaluatorEmail] = useState('');
+  const [evaluators, setEvaluators] = useState([]);
   const [isChecklistOpen, setIsChecklistOpen] = useState(false);
   const [previewDoc, setPreviewDoc] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -47,6 +52,74 @@ export default function SecretariatDashboard({ user, onViewProtocol }) {
   useEffect(() => {
     fetchSubmissions();
   }, []);
+
+  // Fetch Evaluators List
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      // Fetch both endpoints
+      const [subsRes, usersRes] = await Promise.all([
+        fetch('http://localhost:3001/submissions'),
+        fetch('http://localhost:3001/users')
+      ]);
+
+      const subsData = await subsRes.json();
+      const usersData = await usersRes.json();
+
+      // Set submissions
+      setSubmissions(Array.isArray(subsData) ? subsData : []);
+
+      // Filter for 'committee' role to be used as evaluators
+      const committeeMembers = usersData.filter(u => u.role === 'committee');
+      setEvaluators(committeeMembers);
+      
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  // --- EVALUATOR LOGIC (PATCH API) ---
+  const handleAssignEvaluator = async () => {
+    if (!selectedSubmission || !selectedEvaluatorEmail) return;
+
+    const targetEvaluator = evaluators.find(e => e.email === selectedEvaluatorEmail);
+    const currentList = selectedSubmission.assignedEvaluators || [];
+    
+    if (currentList.some(e => e.email === targetEvaluator.email)) return;
+
+    const updatedPayload = {
+      ...selectedSubmission,
+      assignedEvaluators: [...currentList, targetEvaluator]
+    };
+
+    await fetch(`http://localhost:3001/submissions/${selectedSubmission.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedPayload)
+    });
+    fetchSubmissions();
+    setSelectedEvaluatorEmail('');
+  };
+
+  const handleRemoveEvaluator = async (email) => {
+    const updatedPayload = {
+      ...selectedSubmission,
+      assignedEvaluators: (selectedSubmission.assignedEvaluators || []).filter(e => e.email !== email)
+    };
+
+    await fetch(`http://localhost:3001/submissions/${selectedSubmission.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedPayload)
+    });
+    fetchSubmissions();
+  };
 
   // 3. LIVE ACTION: Save "Day 0" to database
   const handleMarkDayZero = async () => {
@@ -109,6 +182,41 @@ export default function SecretariatDashboard({ user, onViewProtocol }) {
     } catch (err) {
       console.error('Failed to return application:', err);
       alert('Error updating database. Please check if json-server is running.');
+    }
+  };
+
+  // 5. LIVE ACTION: Finalize Approval & Move to Stage 5 (Closure)
+  const handleFinalizeApproval = async (e) => {
+    if (!selectedSubmission) return;
+
+    // Simulate file "upload" logic (just ensuring a file is selected)
+    const fileInput = document.getElementById('letter-upload');
+    if (!fileInput || !fileInput.files[0]) {
+      alert("Please upload the signed Approval Letter PDF first.");
+      return;
+    }
+
+    const updatedPayload = {
+      ...selectedSubmission,
+      currentStage: 5,
+      statusLabel: 'Approved & Closed',
+      approvalLetterName: fileInput.files[0].name
+    };
+
+    try {
+      const res = await fetch(`http://localhost:3001/submissions/${selectedSubmission.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedPayload)
+      });
+
+      if (res.ok) {
+        alert("Approval Letter issued and Application Closed!");
+        setSelectedSubmission(null);
+        fetchSubmissions(); 
+      }
+    } catch (err) {
+      console.error('Failed to finalize:', err);
     }
   };
 
@@ -235,6 +343,54 @@ export default function SecretariatDashboard({ user, onViewProtocol }) {
               </div>
             </div>
           </header>
+
+          {/* EVALUATOR SECTION */}
+          <header className="card" style={{ marginBottom: '1.5rem', borderLeft: '4px solid #8b5cf6', backgroundColor: '#faf5ff' }}>
+            <div className="flex-between">
+              <h3><Users size={20} /> Appoint Evaluators</h3>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <select value={selectedEvaluatorEmail} onChange={(e) => setSelectedEvaluatorEmail(e.target.value)}>
+                  <option value="">-- Select --</option>
+                  {evaluators.map(ev => <option key={ev.email} value={ev.email}>{ev.name}</option>)}
+                </select>
+                <button className="btn" style={{ background: '#8b5cf6', color: '#fff' }} onClick={handleAssignEvaluator}>
+                  <UserPlus size={16} /> Assign
+                </button>
+              </div>
+            </div>
+            <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
+              {(selectedSubmission.assignedEvaluators || []).map(ev => (
+                <div key={ev.email} className="badge" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  {ev.name} <button onClick={() => handleRemoveEvaluator(ev.email)}><Trash2 size={12} /></button>
+                </div>
+              ))}
+            </div>
+          </header>
+
+          {/* DECISION & ISSUANCE SECTION (Stage 3) */}
+          {selectedSubmission.currentStage === 4 && (
+            <section className="card" style={{ marginBottom: '1.5rem', borderLeft: '4px solid #059669', backgroundColor: '#ecfdf5' }}>
+              <h3><CheckCircle2 size={20} /> Stage 3: Decision & Issuance</h3>
+              <p style={{ fontSize: '0.85rem', color: '#065f46' }}>
+                Upload the final signed approval letter to close this application file.
+              </p>
+              
+              <div style={{ marginTop: '1rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                <input 
+                  type="file" 
+                  id="letter-upload" 
+                  accept=".pdf" 
+                  style={{ padding: '0.5rem', background: '#fff', border: '1px solid #d1fae5', borderRadius: '4px' }}
+                />
+                <button 
+                  className="btn btn-success" 
+                  onClick={handleFinalizeApproval}
+                >
+                  <FileText size={16} /> Issue Letter & Close Application
+                </button>
+              </div>
+            </section>
+          )}
 
           {/* SPLIT LAYOUT: Document Table (Left) & Checklist Panel (Right) */}
           <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>

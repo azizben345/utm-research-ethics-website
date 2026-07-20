@@ -243,7 +243,7 @@ export default function Step1ProtocolSelection({ formData, setFormData, onNext }
                   style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', fontSize: '0.95rem', boxSizing: 'border-box' }}
                 />
               </div>
-              <div>
+              {/* <div>
                 <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.35rem' }}>
                   Funding Source / Grant Sponsor (stc: not needed)
                 </label>
@@ -253,7 +253,7 @@ export default function Step1ProtocolSelection({ formData, setFormData, onNext }
                   onChange={(e) => setFormData({ ...formData, fundingSource: e.target.value })}
                   style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', fontSize: '0.95rem', boxSizing: 'border-box' }}
                 />
-              </div>
+              </div> */}
             </div>
 
           </div>
