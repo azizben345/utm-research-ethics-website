@@ -11,31 +11,37 @@ import {
   Inbox,
   Users,
   UserPlus,
-  Trash2
+  Trash2,
+  Printer,
+  Settings
 } from 'lucide-react';
-import DocChecklistForm from '../../components/wizards/forms/DocChecklistForm'; // Ensure this path matches your project structure
+import DocChecklistForm from '../../components/wizards/forms/DocChecklistForm';
+
+// Import the Letter Generator Modals we created
+import ClinicalApprovalLetterModal from '../../components/letter_generator/ClinicalApprovalLetterModal'; // Or adjust path to match your folder
+import AnimalApprovalLetterModal from '../../components/letter_generator/AnimalApprovalLetterModal';
+import ExemptionApprovalLetterModal from '../../components/letter_generator/ExemptionApprovalLetterModal';
+import RejectionLetterModal from '../../components/letter_generator/RejectionLetterModal';
 
 export default function SecretariatDashboard({ user, onViewProtocol }) {
-  // 1. Initialize with an empty array for live backend data
   const [submissions, setSubmissions] = useState([]);
-  const [selectedSubmission, setSelectedSubmission] = useState([]);
+  const [selectedSubmission, setSelectedSubmission] = useState(null);
   const [selectedEvaluatorEmail, setSelectedEvaluatorEmail] = useState('');
   const [evaluators, setEvaluators] = useState([]);
   const [isChecklistOpen, setIsChecklistOpen] = useState(false);
   const [previewDoc, setPreviewDoc] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // 2. Safe Fetch Function with Error Handling
+  // States for active letter generator modals
+  const [activeLetterModal, setActiveLetterModal] = useState(null); // 'clinical', 'animal', 'exemption', 'rejection'
+
   const fetchSubmissions = () => {
     setLoading(true);
     fetch('http://localhost:3001/submissions')
       .then((res) => res.json())
       .then((data) => {
-        // Ensure data is always an array even if db.json returns something weird
         const safeData = Array.isArray(data) ? data : [];
         setSubmissions(safeData);
-        
-        // Keep selected project synced after a background refresh
         if (selectedSubmission) {
           const updatedSelected = safeData.find((s) => s.id === selectedSubmission.id);
           setSelectedSubmission(updatedSelected || null);
@@ -53,11 +59,9 @@ export default function SecretariatDashboard({ user, onViewProtocol }) {
     fetchSubmissions();
   }, []);
 
-  // Fetch Evaluators List
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetch both endpoints
       const [subsRes, usersRes] = await Promise.all([
         fetch('http://localhost:3001/submissions'),
         fetch('http://localhost:3001/users')
@@ -66,13 +70,9 @@ export default function SecretariatDashboard({ user, onViewProtocol }) {
       const subsData = await subsRes.json();
       const usersData = await usersRes.json();
 
-      // Set submissions
       setSubmissions(Array.isArray(subsData) ? subsData : []);
-
-      // Filter for 'committee' role to be used as evaluators
       const committeeMembers = usersData.filter(u => u.role === 'committee');
       setEvaluators(committeeMembers);
-      
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
     } finally {
@@ -84,7 +84,6 @@ export default function SecretariatDashboard({ user, onViewProtocol }) {
     fetchData();
   }, []);
 
-  // --- EVALUATOR LOGIC (PATCH API) ---
   const handleAssignEvaluator = async () => {
     if (!selectedSubmission || !selectedEvaluatorEmail) return;
 
@@ -121,7 +120,6 @@ export default function SecretariatDashboard({ user, onViewProtocol }) {
     fetchSubmissions();
   };
 
-  // 3. LIVE ACTION: Save "Day 0" to database
   const handleMarkDayZero = async () => {
     if (!selectedSubmission) return;
 
@@ -141,22 +139,20 @@ export default function SecretariatDashboard({ user, onViewProtocol }) {
       });
 
       if (res.ok) {
-        alert(`Application ${selectedSubmission.id} successfully marked as Day 0.\nIt is now ready for Evaluator Appointment (Stage 2).`);
+        alert(`Application ${selectedSubmission.id} successfully marked as Day 0.`);
         setSelectedSubmission(null);
         setIsChecklistOpen(false);
-        fetchSubmissions(); // Refresh live queue
+        fetchSubmissions();
       }
     } catch (err) {
       console.error('Failed to mark Day 0:', err);
-      alert('Error updating database. Please check if json-server is running.');
     }
   };
 
-  // 4. LIVE ACTION: Save "Return to Applicant" revision request to database
   const handleReturnToApplicant = async () => {
     if (!selectedSubmission) return;
 
-    const reason = prompt("Enter reason for returning application (e.g., 'Missing CVs or Proof of Payment'):");
+    const reason = prompt("Enter reason for returning application:");
     if (!reason) return;
 
     const updatedPayload = {
@@ -174,33 +170,32 @@ export default function SecretariatDashboard({ user, onViewProtocol }) {
       });
 
       if (res.ok) {
-        alert(`Application returned to ${selectedSubmission.applicantName || 'the applicant'} for revision.`);
+        alert("Application returned to applicant for revision.");
         setSelectedSubmission(null);
         setIsChecklistOpen(false);
-        fetchSubmissions(); // Refresh live queue
+        fetchSubmissions();
       }
     } catch (err) {
       console.error('Failed to return application:', err);
-      alert('Error updating database. Please check if json-server is running.');
     }
   };
 
-  // 5. LIVE ACTION: Finalize Approval & Move to Stage 5 (Closure)
-  const handleFinalizeApproval = async (e) => {
+  // --- MANUAL STAGE OVERRIDE HANDLER ---
+  const handleManualStageChange = async (newStage) => {
     if (!selectedSubmission) return;
-
-    // Simulate file "upload" logic (just ensuring a file is selected)
-    const fileInput = document.getElementById('letter-upload');
-    if (!fileInput || !fileInput.files[0]) {
-      alert("Please upload the signed Approval Letter PDF first.");
-      return;
-    }
+    const stageNum = parseInt(newStage, 10);
+    
+    let status = selectedSubmission.statusLabel;
+    if (stageNum === 1) status = 'Screening Stage';
+    if (stageNum === 2) status = 'Under Evaluation';
+    if (stageNum === 3) status = 'Decision Making';
+    if (stageNum === 4) status = 'Approval / Issuance Stage';
+    if (stageNum === 5) status = 'Approved & Closed';
 
     const updatedPayload = {
       ...selectedSubmission,
-      currentStage: 5,
-      statusLabel: 'Approved & Closed',
-      approvalLetterName: fileInput.files[0].name
+      currentStage: stageNum,
+      statusLabel: status
     };
 
     try {
@@ -211,12 +206,11 @@ export default function SecretariatDashboard({ user, onViewProtocol }) {
       });
 
       if (res.ok) {
-        alert("Approval Letter issued and Application Closed!");
-        setSelectedSubmission(null);
-        fetchSubmissions(); 
+        setSelectedSubmission(updatedPayload);
+        fetchSubmissions();
       }
     } catch (err) {
-      console.error('Failed to finalize:', err);
+      console.error('Failed to change stage manually:', err);
     }
   };
 
@@ -224,7 +218,6 @@ export default function SecretariatDashboard({ user, onViewProtocol }) {
     return (
       <div className="container" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
         <h3>Loading Secretariat Portal...</h3>
-        <p>Connecting to institutional database...</p>
       </div>
     );
   }
@@ -232,16 +225,13 @@ export default function SecretariatDashboard({ user, onViewProtocol }) {
   return (
     <div className="container" style={{ maxWidth: '1200px' }}>
       
-      {/* ========================================================= */}
-      {/* VIEW 1: MASTER LIST OF ALL INSTITUTIONAL SUBMISSIONS      */}
-      {/* ========================================================= */}
       {!selectedSubmission ? (
         <>
           <div className="flex-between card" style={{ borderLeft: '4px solid var(--warning)' }}>
             <div>
               <h1 style={{ margin: '0 0 0.25rem 0' }}>Secretariat Screening Portal</h1>
               <p style={{ margin: 0, color: 'var(--text-muted)' }}>
-                Conduct early screenings (within 1 week), verify document completeness, and mark Day 0.
+                Conduct early screenings, verify document completeness, and manage application workflows.
               </p>
             </div>
             <button className="btn" style={{ background: 'var(--bg-app)', border: '1px solid var(--border-color)' }} onClick={fetchSubmissions}>
@@ -249,12 +239,10 @@ export default function SecretariatDashboard({ user, onViewProtocol }) {
             </button>
           </div>
 
-          {/* Fallback if database is completely empty */}
           {submissions.length === 0 ? (
             <div className="card" style={{ textAlign: 'center', padding: '4rem 2rem', color: 'var(--text-muted)' }}>
               <Inbox size={48} style={{ margin: '0 auto 1rem auto', opacity: 0.5 }} />
               <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-main)' }}>No Submissions Found</h3>
-              <p style={{ margin: 0 }}>There are currently no research applications waiting in the database queue.</p>
             </div>
           ) : (
             <div className="grid-cards">
@@ -263,28 +251,22 @@ export default function SecretariatDashboard({ user, onViewProtocol }) {
                   <div>
                     <div className="flex-between" style={{ marginBottom: '0.75rem' }}>
                       <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)' }}>{sub.id || 'NO-ID'}</span>
-                      <span className="badge badge-warning">
-                        Stage {sub.currentStage || 1}: {(sub.currentStage || 1) === 1 ? 'Screening' : 'Evaluation'}
-                      </span>
+                      <span className="badge badge-warning">Stage {sub.currentStage || 1}</span>
                     </div>
                     <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem' }}>{sub.projectTitle || 'Untitled Research Protocol'}</h3>
                     <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0 0 0.25rem 0' }}>
                       <strong>PI:</strong> {sub.applicantName || 'Unknown Applicant'}
                     </p>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0 0 1.5rem 0' }}>
-                      Submitted: {sub.submissionDate || 'Recently'}
-                    </p>
                   </div>
                   
                   <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '0.8rem', color: sub.requiresRevision ? 'var(--danger)' : 'var(--success)', fontWeight: 600 }}>
-                      {sub.requiresRevision ? '⚠️ Revisions Requested' : (sub.currentStage > 1 ? '✔ Cleared (Day 0)' : 'Pending Screening')}
+                      {sub.requiresRevision ? '⚠️ Revisions Requested' : sub.statusLabel}
                     </span>
                     <button 
                       className="btn btn-warning" 
                       onClick={() => {
                         setSelectedSubmission(sub);
-                        // Auto-open checklist if it's not an exemption
                         if (sub.formType !== 'FORM-EXEMPTION') setIsChecklistOpen(true);
                       }}
                     >
@@ -297,9 +279,6 @@ export default function SecretariatDashboard({ user, onViewProtocol }) {
           )}
         </>
       ) : (
-        /* ========================================================= */
-        /* VIEW 2: DETAIL SCREENING & DOCUMENT AUDIT WORKSPACE       */
-        /* ========================================================= */
         <>
           <button 
             className="btn" 
@@ -315,21 +294,35 @@ export default function SecretariatDashboard({ user, onViewProtocol }) {
           <header className="card" style={{ marginBottom: '1.5rem' }}>
             <div className="flex-between" style={{ alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
               <div>
-                <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--warning)' }}>SUBMISSION ID: {selectedSubmission.id}</span>
+                <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--warning)' }}>AUDIT: {selectedSubmission.id}</span>
                 <h1 style={{ margin: '0.25rem 0' }}>{selectedSubmission.projectTitle || 'Untitled Research Protocol'}</h1>
                 <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                  Applicant: {selectedSubmission.applicantName || 'N/A'} | Current Status: <strong>{selectedSubmission.statusLabel || 'Pending'}</strong>
+                  Applicant: {selectedSubmission.applicantName || 'N/A'} | Current Status: <strong>{selectedSubmission.statusLabel}</strong>
                 </p>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.75rem' }}>
-                <span className="badge badge-primary" style={{ fontSize: '0.9rem', padding: '0.5rem 1rem' }}>
-                  Stage {selectedSubmission.currentStage || 1} of 5
-                </span>
                 
-                <div style={{ padding: '0.75rem 1rem', backgroundColor: 'var(--primary-light)', borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ color: 'var(--primary)', fontSize: '0.875rem', fontWeight: 500 }}>
-                    Form Type: <strong>{selectedSubmission.formApplied}</strong>
+                {/* MANUAL STAGE OVERRIDE CONTROLS (Secretariat Governance) */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f1f5f9', padding: '0.4rem 0.75rem', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                  <Settings size={14} color="var(--text-muted)" />
+                  <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>Stage Control:</span>
+                  <select 
+                    value={selectedSubmission.currentStage || 1} 
+                    onChange={(e) => handleManualStageChange(e.target.value)}
+                    style={{ padding: '0.2rem 0.4rem', fontSize: '0.8rem', borderRadius: '4px' }}
+                  >
+                    <option value="1">Stage 1: Screening</option>
+                    <option value="2">Stage 2: Evaluation</option>
+                    <option value="3">Stage 3: Decision</option>
+                    <option value="4">Stage 4: Approval / Issuance</option>
+                    <option value="5">Stage 5: Closure</option>
+                  </select>
+                </div>
+
+                <div style={{ padding: '0.5rem 1rem', backgroundColor: 'var(--primary-light)', borderRadius: 'var(--radius-sm)' }}>
+                  <span style={{ color: 'var(--primary)', fontSize: '0.85rem', fontWeight: 500 }}>
+                    Form Type: <strong>{selectedSubmission.formApplied || 'Standard'}</strong>
                   </span>
                 </div>
 
@@ -358,7 +351,7 @@ export default function SecretariatDashboard({ user, onViewProtocol }) {
                 </button>
               </div>
             </div>
-            <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
+            <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
               {(selectedSubmission.assignedEvaluators || []).map(ev => (
                 <div key={ev.email} className="badge" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   {ev.name} <button onClick={() => handleRemoveEvaluator(ev.email)}><Trash2 size={12} /></button>
@@ -367,26 +360,26 @@ export default function SecretariatDashboard({ user, onViewProtocol }) {
             </div>
           </header>
 
-          {/* DECISION & ISSUANCE SECTION (Stage 3) */}
-          {selectedSubmission.currentStage === 4 && (
+          {/* STAGE 4: DYNAMIC PDF LETTER GENERATORS & ISSUANCE SECTION */}
+          {selectedSubmission.currentStage >= 4 && (
             <section className="card" style={{ marginBottom: '1.5rem', borderLeft: '4px solid #059669', backgroundColor: '#ecfdf5' }}>
-              <h3><CheckCircle2 size={20} /> Stage 3: Decision & Issuance</h3>
-              <p style={{ fontSize: '0.85rem', color: '#065f46' }}>
-                Upload the final signed approval letter to close this application file.
+              <h3><CheckCircle2 size={20} /> Stage 4: Decision & Letter Issuance</h3>
+              <p style={{ fontSize: '0.85rem', color: '#065f46', marginBottom: '1rem' }}>
+                Select the appropriate official institutional document to generate, preview, and print as a PDF.
               </p>
               
-              <div style={{ marginTop: '1rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                <input 
-                  type="file" 
-                  id="letter-upload" 
-                  accept=".pdf" 
-                  style={{ padding: '0.5rem', background: '#fff', border: '1px solid #d1fae5', borderRadius: '4px' }}
-                />
-                <button 
-                  className="btn btn-success" 
-                  onClick={handleFinalizeApproval}
-                >
-                  <FileText size={16} /> Issue Letter & Close Application
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <button className="btn btn-success" onClick={() => setActiveLetterModal('clinical')} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <Printer size={16} /> Generate Clinical / Non-Clinical Letter
+                </button>
+                <button className="btn btn-success" onClick={() => setActiveLetterModal('animal')} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <Printer size={16} /> Generate Animal Research Letter
+                </button>
+                <button className="btn btn-success" onClick={() => setActiveLetterModal('exemption')} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <Printer size={16} /> Generate Exemption Letter
+                </button>
+                <button className="btn btn-danger" onClick={() => setActiveLetterModal('rejection')} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#dc2626', color: '#fff' }}>
+                  <AlertTriangle size={16} /> Generate Rejection Notice
                 </button>
               </div>
             </section>
@@ -394,8 +387,6 @@ export default function SecretariatDashboard({ user, onViewProtocol }) {
 
           {/* SPLIT LAYOUT: Document Table (Left) & Checklist Panel (Right) */}
           <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-            
-            {/* Left Side: Document Repository Table */}
             <div className="card" style={{ flex: isChecklistOpen ? '2' : '1', minWidth: '300px', transition: 'all 0.3s', margin: 0 }}>
               <div className="flex-between" style={{ marginBottom: '1rem' }}>
                 <h3 style={{ margin: 0 }}>Submitted Document Audit</h3>
@@ -416,11 +407,10 @@ export default function SecretariatDashboard({ user, onViewProtocol }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {/* DEFensive fallback: || [] prevents white screen crash if documents is missing */}
                     {(selectedSubmission.documents || []).length === 0 ? (
                       <tr>
                         <td colSpan="3" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
-                          No documents found attached to this submission.
+                          No documents found attached.
                         </td>
                       </tr>
                     ) : (
@@ -429,15 +419,9 @@ export default function SecretariatDashboard({ user, onViewProtocol }) {
                           <td style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <FileText size={16} color="var(--text-muted)" /> {doc.type || 'Attachment'}
                           </td>
-                          <td style={{ color: 'var(--primary)', fontWeight: 500, maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {doc.name || `File_${idx + 1}.pdf`}
-                          </td>
+                          <td style={{ color: 'var(--primary)', fontWeight: 500 }}>{doc.name}</td>
                           <td>
-                            <button 
-                              className="btn" 
-                              style={{ padding: '0.25rem 0.5rem', backgroundColor: 'var(--bg-app)', border: '1px solid var(--border-color)' }}
-                              onClick={() => setPreviewDoc(doc)}
-                            >
+                            <button className="btn" style={{ padding: '0.25rem 0.5rem', backgroundColor: 'var(--bg-app)', border: '1px solid var(--border-color)' }} onClick={() => setPreviewDoc(doc)}>
                               <Eye size={14} /> Preview
                             </button>
                           </td>
@@ -449,7 +433,6 @@ export default function SecretariatDashboard({ user, onViewProtocol }) {
               </div>
             </div>
 
-            {/* Right Side: Digital Screening Checklist Panel */}
             {isChecklistOpen && selectedSubmission.formType !== 'FORM-EXEMPTION' && (
               <div style={{ flex: '1', minWidth: '350px', backgroundColor: '#fff', borderRadius: '8px', border: '1px solid var(--border-color)', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', height: '650px', position: 'sticky', top: '20px' }}>
                 <DocChecklistForm 
@@ -463,28 +446,18 @@ export default function SecretariatDashboard({ user, onViewProtocol }) {
         </>
       )}
 
-      {/* MOCK PDF PREVIEW MODAL */}
-      {previewDoc && (
-        <div className="modal-overlay" onClick={() => setPreviewDoc(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <FileText color="var(--primary)" size={20} />
-                <h4 style={{ margin: 0 }}>Document Viewer: {previewDoc.name || 'Document Preview'}</h4>
-              </div>
-              <button className="btn" style={{ padding: '0.25rem', background: 'transparent' }} onClick={() => setPreviewDoc(null)}>
-                <X size={20} />
-              </button>
-            </div>
-            <div className="modal-body">
-              <div style={{ padding: '3rem', border: '2px dashed var(--border-color)', borderRadius: 'var(--radius-md)', background: '#fff', textAlign: 'center' }}>
-                <FileText size={48} color="var(--text-muted)" style={{ margin: '0 auto 1rem auto' }} />
-                <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-main)' }}>PDF Content Simulator</h3>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Displaying contents for <strong>{previewDoc.type || 'Attachment'}</strong>.</p>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* RENDER ACTIVE PDF LETTER GENERATOR MODAL */}
+      {activeLetterModal === 'clinical' && (
+        <ClinicalApprovalLetterModal submission={selectedSubmission} onClose={() => setActiveLetterModal(null)} />
+      )}
+      {activeLetterModal === 'animal' && (
+        <AnimalApprovalLetterModal submission={selectedSubmission} onClose={() => setActiveLetterModal(null)} />
+      )}
+      {activeLetterModal === 'exemption' && (
+        <ExemptionApprovalLetterModal submission={selectedSubmission} onClose={() => setActiveLetterModal(null)} />
+      )}
+      {activeLetterModal === 'rejection' && (
+        <RejectionLetterModal submission={selectedSubmission} onClose={() => setActiveLetterModal(null)} />
       )}
 
     </div>

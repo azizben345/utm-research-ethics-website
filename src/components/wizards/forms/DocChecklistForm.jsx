@@ -16,24 +16,24 @@ export default function DocChecklistForm({ formApplied, onMarkDayZero, onReturnT
     if (formApplied === 'Animal Research Ethics') {
       return [
         ...universalItems,
-        { id: 'vetDec', label: 'Attending Veterinarian’s Declaration', compulsory: false, isSpecific: true } //[cite: 18]
+        { id: 'vetDec', label: 'Attending Veterinarian’s Declaration', compulsory: false, isSpecific: true } //
       ];
     }
 
     const humanTrialsItems = [
-      { id: 'protocol', label: 'Instrument Protocol (Questionnaire, Interview, etc.)', compulsory: true, isSpecific: true }, //[cite: 19, 20]
-      { id: 'validation', label: 'Proof of Validation by 2 Experts (or Justification)', compulsory: true, isSpecific: true }, //[cite: 19, 20]
-      { id: 'consent', label: 'Respondent’s Information Sheet and Consent (Malay/English)', compulsory: true, isSpecific: true }, //[cite: 19, 20]
-      { id: 'advert', label: 'Advertisement for Subject Recruitment', compulsory: false, isSpecific: true }, //[cite: 19, 20]
-      { id: 'risk', label: 'Research Risk Assessment Checklist', compulsory: true, isSpecific: true } //[cite: 19, 20]
+      { id: 'protocol', label: 'Instrument Protocol (Questionnaire, Interview, etc.)', compulsory: true, isSpecific: true }, //
+      { id: 'validation', label: 'Proof of Validation by 2 Experts (or Justification)', compulsory: true, isSpecific: true }, //
+      { id: 'consent', label: 'Respondent’s Information Sheet and Consent (Malay/English)', compulsory: true, isSpecific: true }, //
+      { id: 'advert', label: 'Advertisement for Subject Recruitment', compulsory: false, isSpecific: true }, //
+      { id: 'risk', label: 'Research Risk Assessment Checklist', compulsory: true, isSpecific: true } //
     ];
 
     if (formApplied === 'Clinical Research Ethics') {
       return [
         ...universalItems,
         ...humanTrialsItems,
-        { id: 'gcp', label: 'Good Clinical Practices Certificate (GCP)', compulsory: true, isSpecific: true }, //[cite: 19]
-        { id: 'insurance', label: 'Insurance statement (Indemnity coverage)', compulsory: false, isSpecific: true } //[cite: 19]
+        { id: 'gcp', label: 'Good Clinical Practices Certificate (GCP)', compulsory: true, isSpecific: true }, //
+        { id: 'insurance', label: 'Insurance statement (Indemnity coverage)', compulsory: false, isSpecific: true } //
       ];
     }
 

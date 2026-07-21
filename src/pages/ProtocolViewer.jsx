@@ -16,7 +16,7 @@ const MOCK_SUBMISSION = {
   applicantName: "Dr. Sarah Razak",
   applicantEmail: "sarah.r@utm.my",
   submissionDate: "2026-07-19",
-  statusLabel: "Pending Dean Approval",
+  statusLabel: "Drafted (Pending Dean Approval)",
   protocolData: {
     exemptionStudyType: "Non-Clinical",
     projectTitle: "AI-Driven Predictive Maintenance for Smart Campus Infrastructure",
@@ -127,7 +127,7 @@ export default function ProtocolViewer({ submissionId, onBack }) {
         {/* Visual Indicator that this is a locked view */}
         <div style={{ padding: '0.75rem 1rem', backgroundColor: '#f3f4f6', borderRadius: '4px', border: '1px dashed #9ca3af', display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem', color: '#4b5563', fontSize: '0.85rem' }}>
           <ShieldAlert size={18} />
-          <strong>Read-Only Mode:</strong> This protocol is currently locked for review. Form inputs and action buttons are disabled.
+          <strong>Read-Only Mode:</strong> This protocol is currently locked for review. Form inputs and action buttons are disabled. (mock data)
         </div>
 
         {submission.formType === 'FORM-EXEMPTION' && (

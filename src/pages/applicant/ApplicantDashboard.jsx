@@ -15,6 +15,7 @@ import {
 // import { useNavigate } from 'react-router-dom';
 import Step4ReviewFee from '../../components/wizards/Step4ReviewFee';
 import Step5FinalReview from '../../components/wizards/Step5FinalReview';
+import PeriodicMonitoringForm from '../../components/wizards/forms/PeriodicMonitoringForm';
 
 export default function ApplicantDashboard({ user, onStartNew, onViewProtocol }) {
   const [submissions, setSubmissions] = useState([]);
@@ -28,6 +29,9 @@ export default function ApplicantDashboard({ user, onStartNew, onViewProtocol })
   const [paymentModalStep, setPaymentModalStep] = useState(1);
   const [generatedReceiptRef, setGeneratedReceiptRef] = useState('');
   const [generatedReceiptDoc, setGeneratedReceiptDoc] = useState(null);
+
+  // State for the 6-Month Periodic Monitoring Modal
+  const [showMonitoringModal, setShowMonitoringModal] = useState(false);
 
   // Define the 5 core UTM REC stages
   const stages = [
@@ -91,6 +95,39 @@ export default function ApplicantDashboard({ user, onStartNew, onViewProtocol })
     } catch (err) {
       console.error('Payment Error:', err);
       setIsProcessingPay(false);
+    }
+  };
+
+  const handlePeriodicReportSubmit = async (reportData) => {
+    try {
+      const existingReports = selectedSubmission.periodicReports || [];
+      const updatedReports = [
+        ...existingReports, 
+        { ...reportData, id: Date.now(), submittedAt: new Date().toISOString() }
+      ];
+
+      const res = await fetch(`http://localhost:3001/submissions/${selectedSubmission.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          periodicReports: updatedReports
+        })
+      });
+
+      if (res.ok) {
+        alert("6-month progress report successfully submitted to UTM REC!");
+        setShowMonitoringModal(false);
+        fetchSubmissions(); // Refresh global list
+        
+        // Keep currently viewed submission synced
+        setSelectedSubmission(prev => ({
+          ...prev,
+          periodicReports: updatedReports
+        }));
+      }
+    } catch (err) {
+      console.error("Error saving periodic report:", err);
+      alert("Failed to save report to backend database.");
     }
   };
 
@@ -255,6 +292,137 @@ export default function ApplicantDashboard({ user, onStartNew, onViewProtocol })
             </div>
           </section>
 
+          {/* CONDITIONAL 6-MONTH MONITORING REPORT BANNER (Stage 5 Closed) */}
+          {selectedSubmission?.currentStage === 5 && selectedSubmission?.statusLabel === 'Approved & Closed' && (
+            <div className="card" style={{ backgroundColor: '#ecfdf5', borderLeft: '4px solid #059669', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginTop: '1rem' }}>
+              <div>
+                <h4 style={{ margin: '0 0 0.25rem 0', color: '#065f46' }}>Periodic Monitoring Report Required</h4>
+                <p style={{ margin: 0, color: '#065f46', fontSize: '0.9rem' }}>
+                  Clinical and non-clinical reports must be submitted every six (6) months to UTM REC (Up to 8 reports).
+                </p>
+                {selectedSubmission.periodicReports?.length > 0 && (
+                  <span style={{ fontSize: '0.8rem', color: '#047857', fontWeight: 600, display: 'inline-block', marginTop: '0.25rem' }}>
+                    ✓ {selectedSubmission.periodicReports.length} report(s) submitted so far.
+                  </span>
+                )}
+              </div>
+              <button 
+                className="btn btn-success"
+                onClick={() => setShowMonitoringModal(true)}
+              >
+                Fill 6-Month Progress Report Form <PlusCircle size={16} />
+              </button>
+            </div>
+          )}
+
+          {/* LIST OF SUBMITTED PERIODIC REPORTS */}
+          {selectedSubmission?.periodicReports?.length > 0 && (
+            <div className="card" style={{ marginTop: '1rem' }}>
+              <h4 style={{ margin: '0 0 0.75rem 0', color: '#065f46' }}>Submitted Periodic Monitoring Reports</h4>
+              <div className="table-container">
+                <table className="custom-table">
+                  <thead>
+                    <tr>
+                      <th>Report No.</th>
+                      <th>PI Signature</th>
+                      <th>Submission Date</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedSubmission.periodicReports.map((rep, idx) => (
+                      <tr key={rep.id || idx}>
+                        <td style={{ fontWeight: 600 }}>Report #{rep.reportNo}</td>
+                        <td>{rep.piSignature}</td>
+                        <td style={{ color: 'var(--text-muted)' }}>{new Date(rep.submittedAt).toLocaleDateString()}</td>
+                        <td><span className="badge badge-success">Submitted</span></td>
+                        <td>
+                          <button 
+                            className="btn" 
+                            style={{ padding: '0.25rem 0.5rem', backgroundColor: 'var(--bg-app)', border: '1px solid var(--border-color)' }}
+                          >
+                            <Eye size={14} /> Preview
+                          </button>
+                          <button className="btn btn-sm btn-danger" style={{ padding: '0.25rem 0.5rem', backgroundColor: 'red', color: 'white', borderColor: 'red' }}>
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* DIRECT DOCUMENT UPLOADER & CORRECTION SECTION */}
+          <div className="card" style={{ marginTop: '1.5rem', borderLeft: '4px solid var(--primary)' }}>
+            <h3 style={{ marginTop: 0, marginBottom: '0.5rem' }}>Upload / Revise Documents</h3>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+              Use this section to upload corrected files requested by the Secretariat or Committee during revisions.
+            </p>
+
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+              <input 
+                type="text" 
+                id="new-doc-type" 
+                placeholder="Document Type (e.g. Revised CV)" 
+                className="form-control" 
+                style={{ flex: 1, minWidth: '200px', padding: '0.5rem' }}
+              />
+              <input 
+                type="file" 
+                id="new-doc-file" 
+                accept=".pdf" 
+                style={{ padding: '0.4rem', background: '#fff', border: '1px solid var(--border-color)', borderRadius: '4px' }}
+              />
+              <button 
+                className="btn btn-primary"
+                onClick={async () => {
+                  const typeInput = document.getElementById('new-doc-type');
+                  const fileInput = document.getElementById('new-doc-file');
+
+                  if (!typeInput.value || !fileInput.files[0]) {
+                    alert("Please enter a document type and select a PDF file.");
+                    return;
+                  }
+
+                  const newDoc = {
+                    id: `doc-${Date.now()}`,
+                    type: typeInput.value,
+                    name: fileInput.files[0].name,
+                    uploadDate: new Date().toISOString().split('T')[0],
+                    status: 'Uploaded (Pending Review)'
+                  };
+
+                  const updatedDocs = [...(selectedSubmission.documents || []), newDoc];
+
+                  try {
+                    const res = await fetch(`http://localhost:3001/submissions/${selectedSubmission.id}`, {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ documents: updatedDocs, requiresRevision: false }) // clears revision flag on upload
+                    });
+
+                    if (res.ok) {
+                      alert("Document uploaded successfully!");
+                      typeInput.value = '';
+                      fileInput.value = '';
+                      fetchSubmissions();
+                      setSelectedSubmission(prev => ({ ...prev, documents: updatedDocs, requiresRevision: false }));
+                    }
+                  } catch (err) {
+                    console.error("Upload failed:", err);
+                    alert("Failed to update database.");
+                  }
+                }}
+              >
+                Upload Document
+              </button>
+            </div>
+          </div>
+
           {/* CONDITIONAL FEE PAYMENT ALERT BANNER */}
           {selectedSubmission.statusLabel === 'Drafted (Pending Payment)' && (
             <div className="card" style={{ backgroundColor: '#eff6ff', borderLeft: '4px solid var(--primary)', display: 'flex', gap: '1rem', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
@@ -291,7 +459,6 @@ export default function ApplicantDashboard({ user, onStartNew, onViewProtocol })
             </div>
           )}
 
-          {/* DOCUMENT REPOSITORY TABLE */}
           {/* DOCUMENT REPOSITORY TABLE */}
           <section className="card">
             <h3 style={{ marginTop: 0, marginBottom: '1rem' }}>Submitted Files Repository</h3>
@@ -352,6 +519,8 @@ export default function ApplicantDashboard({ user, onStartNew, onViewProtocol })
           </section>
         </>
       )}
+
+      {/* MODALS SECTION: */}
 
       {/* ========================================================= */}
       {/* VIEW 3: MOCK PDF PREVIEW MODAL                            */}
@@ -427,6 +596,15 @@ export default function ApplicantDashboard({ user, onStartNew, onViewProtocol })
 
           </div>
         </div>
+      )}
+
+      {/* PERIODIC MONITORING FORM MODAL */}
+      {showMonitoringModal && (
+        <PeriodicMonitoringForm 
+          submission={selectedSubmission}
+          onClose={() => setShowMonitoringModal(false)}
+          onSubmitReport={handlePeriodicReportSubmit}
+        />
       )}
 
     </div>
