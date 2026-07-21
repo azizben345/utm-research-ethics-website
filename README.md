@@ -1,16 +1,24 @@
-# React + Vite
+# UTM Research Ethics Committee (UTMREC) Prototype
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A digital workflow prototype for managing research ethics applications, secretariat screening, committee evaluations, and approval issuance at UTM REC.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🚀 Quick Start Guide (For Evaluators & Developers)
 
-## React Compiler
+### Prerequisites
+Ensure **Node.js** installed on machine 
+(Download it from [nodejs.org](https://nodejs.org/)).
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Running the Application
 
-## Expanding the Oxlint configuration
+#### Option 1: Easy Way (Windows Users)
+1. Unzip or open the project folder.
+2. Double-click the **`start.bat`** file.
+3. Your browser will automatically open to the prototype local server (usually `http://localhost:5173`).
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+#### Option 2: Command Line (Mac / Linux / Windows)
+1. Open your terminal or command prompt inside the project root folder.
+2. Install dependencies (only required on the first run):
+   ```bash
+   npm install
