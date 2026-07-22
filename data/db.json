@@ -1,0 +1,561 @@
+{
+  "users": [
+    {
+      "id": "USR-001",
+      "name": "Dr. Sarah Razak",
+      "email": "sarah.r@utm.my",
+      "password": "pass123",
+      "role": "applicant",
+      "title": "Principal Investigator",
+      "department": "Faculty of Computing"
+    },
+    {
+      "id": "USR-002",
+      "name": "Nurul Aini",
+      "email": "nurul.aini@utm.my",
+      "password": "pass123",
+      "role": "secretariat",
+      "title": "REC Secretariat Admin",
+      "department": "Research Management Centre"
+    },
+    {
+      "id": "USR-003",
+      "name": "Prof. Dr. Ariffin",
+      "email": "ariffin@utm.my",
+      "password": "pass123",
+      "role": "committee",
+      "title": "Panel Reviewer",
+      "department": "Main Ethics Committee"
+    },
+    {
+      "id": "USR-004",
+      "name": "Prof. Dr. Anis",
+      "email": "anis@utm.my",
+      "password": "pass123",
+      "role": "committee",
+      "title": "Panel Reviewer",
+      "department": "Main Ethics Committee"
+    },
+    {
+      "id": "USR-005",
+      "name": "Prof. Dr. Kasim",
+      "email": "dean.computing@utm.my",
+      "password": "pass123",
+      "role": "dean",
+      "title": "Dean of Faculty",
+      "department": "Faculty of Computing"
+    }
+  ],
+  "submissions": [
+    {
+      "id": "NeElE90P6Jg",
+      "projectTitle": "Project Title Name",
+      "applicantName": "Dr. Sarah Razak",
+      "applicantEmail": "sarah.r@utm.my",
+      "faculty": "Faculty of Computing",
+      "fundingSource": "MOHE Grant",
+      "formApplied": "Clinical Research Ethics",
+      "applicantCategory": "INTERNAL",
+      "submissionDate": "2026-07-18",
+      "currentStage": 5,
+      "statusLabel": "Approved & Closed",
+      "riskClassification": "Pending",
+      "requiresRevision": false,
+      "revisionMessage": "",
+      "feePaid": "RM 100",
+      "paymentStatus": "Paid (Pending Verification)",
+      "documents": [
+        {
+          "id": "doc-1784366557343-541",
+          "name": "PI_Resume_test_541.pdf",
+          "type": "Curriculum Vitae (CV)",
+          "uploadDate": "2026-07-18",
+          "size": "2.4 MB",
+          "status": "Verified"
+        },
+        {
+          "id": "doc-1784366559312-770",
+          "name": "Study_Protocol_test_770.pdf",
+          "type": "Research Instrument / Protocol",
+          "uploadDate": "2026-07-18",
+          "size": "2.4 MB",
+          "status": "Verified"
+        },
+        {
+          "id": "doc-1784366561925-263",
+          "name": "GCP_Certificate_test_263.pdf",
+          "type": "Good Clinical Practices (GCP)",
+          "uploadDate": "2026-07-18",
+          "size": "2.4 MB",
+          "status": "Verified"
+        },
+        {
+          "id": "doc-1784367541537-576",
+          "name": "Gantt_Chart_test_576.pdf",
+          "type": "Research Procedure Gantt Chart",
+          "uploadDate": "2026-07-18",
+          "size": "2.4 MB",
+          "status": "Verified"
+        },
+        {
+          "id": "doc-1784367542110-270",
+          "name": "Expert_Validation_test_270.pdf",
+          "type": "Proof of Instrument Validation",
+          "uploadDate": "2026-07-18",
+          "size": "2.4 MB",
+          "status": "Verified"
+        },
+        {
+          "id": "doc-1784367546312-702",
+          "name": "UTM_Checklist_test_702.pdf",
+          "type": "Checklist Form (1.4)",
+          "uploadDate": "2026-07-18",
+          "size": "2.4 MB",
+          "status": "Verified"
+        },
+        {
+          "id": "doc-1784367547371-668",
+          "name": "Informed_Consent_test_668.pdf",
+          "type": "Respondent Consent Form",
+          "uploadDate": "2026-07-18",
+          "size": "2.4 MB",
+          "status": "Verified"
+        },
+        {
+          "id": "doc-receipt-1784367593118",
+          "name": "Official_Payment_Receipt_UTM-PAYHUB-165802.pdf",
+          "type": "Official Payment Receipt",
+          "uploadDate": "2026-07-18",
+          "size": "420 KB",
+          "status": "Verified Paid"
+        },
+        {
+          "id": "doc-1784625592998",
+          "type": "Testing Upload",
+          "name": "Approval letter clinical and non-clinical.pdf",
+          "uploadDate": "2026-07-21",
+          "status": "Uploaded (Pending Review)"
+        }
+      ],
+      "assignedEvaluators": [
+        {
+          "id": "USR-003",
+          "name": "Prof. Dr. Ariffin",
+          "email": "ariffin@utm.my",
+          "password": "pass123",
+          "role": "committee",
+          "title": "Panel Reviewer",
+          "department": "Main Ethics Committee"
+        }
+      ],
+      "panelEvaluationResult": {
+        "c4": "Yes",
+        "c5": "Yes",
+        "c3": "Yes",
+        "c1": "Yes",
+        "c2": "Yes",
+        "overallComments": "Good comment"
+      },
+      "approvalLetterName": "Approval letter clinical and non-clinical.pdf",
+      "periodicReports": [
+        {
+          "reportNo": "1",
+          "applicationNo": "NeElE90P6Jg",
+          "approvalNo": "",
+          "dateOfApproval": "",
+          "researchType": "Clinical",
+          "researchTitle": "Project Title Name",
+          "piName": "Dr. Sarah Razak",
+          "contactNumber": "",
+          "email": "sarah.r@utm.my",
+          "department": "",
+          "faculty": "Faculty of Computing",
+          "hasStarted": "Yes",
+          "actualStartDate": "2026-07-21",
+          "expectedStartDate": "",
+          "hasCompleted": "No",
+          "targetedCompletionDate": "2026-07-23",
+          "researchSite": "UTM",
+          "additionalSites": "No",
+          "changesToSites": "No",
+          "proposedParticipants": "2",
+          "actualRecruited": "2",
+          "actualCompleted": "2",
+          "withdrawalConsent": "0",
+          "withdrawalFollowUp": "0",
+          "withdrawalDeath": "0",
+          "withdrawalOther": "",
+          "failureAdverse": "0",
+          "failureEfficacy": "0",
+          "increaseRecruitment": "No",
+          "hasSusars": "No",
+          "susarsDetails": "",
+          "susarsNotified": "No",
+          "susarsReason": "",
+          "riskBenefitMaintained": "Yes",
+          "riskBenefitElaboration": "",
+          "hasAmendments": "No",
+          "amendmentsApproved": "No",
+          "amendmentApprovalDate": "",
+          "amendmentsReason": "",
+          "piSignature": "Dr. Sarah Razak",
+          "piDeclarationName": "Dr. Sarah Razak",
+          "declarationDate": "2026-07-21",
+          "id": 1784632141140,
+          "submittedAt": "2026-07-21T11:09:01.140Z"
+        }
+      ]
+    },
+    {
+      "id": "1lliMPCBja0",
+      "projectTitle": "test",
+      "applicantName": "Dr. Sarah Razak",
+      "applicantEmail": "sarah.r@utm.my",
+      "faculty": "Faculty of Computing",
+      "fundingSource": "MOHE Grant",
+      "formApplied": "Animal Research Ethics",
+      "applicantCategory": "INTERNAL",
+      "submissionDate": "2026-07-18",
+      "currentStage": 1,
+      "statusLabel": "Submitted (Pending Secretariat Screening)",
+      "riskClassification": "Pending",
+      "requiresRevision": false,
+      "revisionMessage": "",
+      "feePaid": "RM 100",
+      "paymentStatus": "Paid (Pending Verification)",
+      "documents": [
+        {
+          "id": "doc-1784387037575-975",
+          "name": "UTM_Checklist_test_975.pdf",
+          "type": "Checklist Form (1.4)",
+          "uploadDate": "2026-07-18",
+          "size": "2.4 MB",
+          "status": "Pending Screening"
+        },
+        {
+          "id": "doc-1784387037975-241",
+          "name": "Informed_Consent_test_241.pdf",
+          "type": "Respondent Consent Form",
+          "uploadDate": "2026-07-18",
+          "size": "2.4 MB",
+          "status": "Pending Screening"
+        },
+        {
+          "id": "doc-1784387040148-906",
+          "name": "PI_Resume_test_906.pdf",
+          "type": "Curriculum Vitae (CV)",
+          "uploadDate": "2026-07-18",
+          "size": "2.4 MB",
+          "status": "Pending Screening"
+        },
+        {
+          "id": "doc-receipt-1784387348797",
+          "name": "Official_Payment_Receipt_UTM-PAYHUB-961234.pdf",
+          "type": "Official Payment Receipt",
+          "uploadDate": "2026-07-18",
+          "size": "420 KB",
+          "status": "Verified Paid"
+        }
+      ]
+    },
+    {
+      "id": "4zCCsh3vP3A",
+      "projectTitle": "test",
+      "applicantName": "Dr. Sarah Razak",
+      "applicantEmail": "sarah.r@utm.my",
+      "faculty": "Faculty of Computing",
+      "fundingSource": "MOHE Grant",
+      "formApplied": "Exemption Form",
+      "applicantCategory": "INTERNAL",
+      "routingEmail": "dean.computing@utm.my",
+      "submissionDate": "2026-07-19",
+      "currentStage": 1,
+      "statusLabel": "Submitted (Pending Secretariat Screening)",
+      "riskClassification": "Pending",
+      "requiresRevision": false,
+      "revisionMessage": "",
+      "feeAmount": 100,
+      "feePaid": "RM 100",
+      "paymentStatus": "Paid (Pending Verification)",
+      "documents": [
+        {
+          "id": "doc-1784453326011-546",
+          "name": "UTM_Checklist_test_546.pdf",
+          "type": "Checklist Form (1.4)",
+          "uploadDate": "2026-07-19",
+          "size": "2.4 MB",
+          "status": "Pending Screening"
+        },
+        {
+          "id": "doc-1784453326737-232",
+          "name": "Informed_Consent_test_232.pdf",
+          "type": "Respondent Consent Form",
+          "uploadDate": "2026-07-19",
+          "size": "2.4 MB",
+          "status": "Pending Screening"
+        },
+        {
+          "id": "doc-1784453345005-760",
+          "name": "GCP_Certificate_test_760.pdf",
+          "type": "Good Clinical Practices (GCP)",
+          "uploadDate": "2026-07-19",
+          "size": "2.4 MB",
+          "status": "Pending Screening"
+        },
+        {
+          "id": "doc-1784453346572-259",
+          "name": "PI_Team_CV_test_259.pdf",
+          "type": "Curriculum Vitae (CV)",
+          "uploadDate": "2026-07-19",
+          "size": "2.4 MB",
+          "status": "Pending Screening"
+        },
+        {
+          "id": "doc-receipt-1784456075553",
+          "name": "Official_Receipt_4zCCsh3vP3A.pdf",
+          "type": "Official Payment Receipt",
+          "uploadDate": "2026-07-19",
+          "size": "340 KB",
+          "status": "Verified Paid"
+        }
+      ]
+    },
+    {
+      "id": "1ppob8XJuIU",
+      "projectTitle": "Payment Test",
+      "applicantName": "Dr. Sarah Razak",
+      "applicantEmail": "sarah.r@utm.my",
+      "faculty": "Faculty of Computing",
+      "fundingSource": "MOHE Grant",
+      "formApplied": "Non-Clinical Research Ethics",
+      "applicantCategory": "INTERNAL",
+      "routingEmail": "dean.computing@utm.my",
+      "submissionDate": "2026-07-19",
+      "currentStage": 2,
+      "statusLabel": "Under Evaluation",
+      "riskClassification": "Pending",
+      "requiresRevision": false,
+      "revisionMessage": "",
+      "feeAmount": 50,
+      "feePaid": "RM 50.00",
+      "paymentStatus": "Paid (Pending Verification)",
+      "documents": [
+        {
+          "id": "doc-1784456675984-639",
+          "name": "UTM_Checklist_Payment_Test_639.pdf",
+          "type": "Checklist Form (1.4)",
+          "uploadDate": "2026-07-19",
+          "size": "2.4 MB",
+          "status": "Pending Screening"
+        },
+        {
+          "id": "doc-1784456676586-864",
+          "name": "Informed_Consent_Payment_Test_864.pdf",
+          "type": "Respondent Consent Form",
+          "uploadDate": "2026-07-19",
+          "size": "2.4 MB",
+          "status": "Pending Screening"
+        },
+        {
+          "id": "doc-1784456677657-410",
+          "name": "PI_Team_CV_Payment_Test_410.pdf",
+          "type": "Curriculum Vitae (CV)",
+          "uploadDate": "2026-07-19",
+          "size": "2.4 MB",
+          "status": "Pending Screening"
+        },
+        {
+          "id": "doc-receipt-1784458863730",
+          "name": "Official_Payment_Receipt_UTM-PAYHUB-516234.pdf",
+          "type": "Official Payment Receipt",
+          "uploadDate": "2026-07-19",
+          "size": "420 KB",
+          "status": "Verified Paid"
+        }
+      ],
+      "assignedEvaluators": [
+        {
+          "id": "USR-004",
+          "name": "Prof. Dr. Anis",
+          "email": "anis@utm.my",
+          "password": "pass123",
+          "role": "committee",
+          "title": "Panel Reviewer",
+          "department": "Main Ethics Committee"
+        }
+      ]
+    },
+    {
+      "id": "Rl0z5JnRgcw",
+      "projectTitle": "Not Paid",
+      "applicantName": "Dr. Sarah Razak",
+      "applicantEmail": "sarah.r@utm.my",
+      "faculty": "Faculty of Computing",
+      "fundingSource": "MOHE Grant",
+      "formApplied": "Clinical Research Ethics",
+      "applicantCategory": "INTERNAL",
+      "routingEmail": "dean.computing@utm.my",
+      "submissionDate": "2026-07-19",
+      "currentStage": 0,
+      "statusLabel": "Drafted (Pending Dean Approval)",
+      "riskClassification": "Pending",
+      "requiresRevision": false,
+      "revisionMessage": "",
+      "feeAmount": 100,
+      "feePaid": "RM 100",
+      "paymentStatus": "Unpaid",
+      "documents": [
+        {
+          "id": "doc-1784476450723-929",
+          "name": "Informed_Consent_Not_Paid_929.pdf",
+          "type": "Respondent Consent Form",
+          "uploadDate": "2026-07-19",
+          "size": "2.4 MB",
+          "status": "Pending Screening"
+        },
+        {
+          "id": "doc-1784476451439-815",
+          "name": "UTM_Checklist_Not_Paid_815.pdf",
+          "type": "Checklist Form (1.4)",
+          "uploadDate": "2026-07-19",
+          "size": "2.4 MB",
+          "status": "Pending Screening"
+        },
+        {
+          "id": "doc-1784476452556-410",
+          "name": "PI_Team_CV_Not_Paid_410.pdf",
+          "type": "Curriculum Vitae (CV)",
+          "uploadDate": "2026-07-19",
+          "size": "2.4 MB",
+          "status": "Pending Screening"
+        }
+      ],
+      "formType": "FORM-CLINICAL",
+      "protocolData": {}
+    },
+    {
+      "id": "7jRYrzBjsRA",
+      "projectTitle": "Test Project",
+      "applicantName": "Dr. Sarah Razak",
+      "applicantEmail": "sarah.r@utm.my",
+      "faculty": "Faculty of Computing",
+      "fundingSource": "MOHE Grant",
+      "formApplied": "Clinical Research Ethics",
+      "applicantCategory": "INTERNAL",
+      "routingEmail": "dean.computing@utm.my",
+      "submissionDate": "2026-07-20",
+      "currentStage": 5,
+      "statusLabel": "Approved & Closed",
+      "riskClassification": "Pending",
+      "requiresRevision": false,
+      "revisionMessage": "",
+      "feeAmount": 100,
+      "feePaid": "RM 100.00",
+      "paymentStatus": "Paid (Pending Verification)",
+      "documents": [
+        {
+          "id": "doc-1784530929593-317",
+          "name": "UTM_Checklist_Test_Project_317.pdf",
+          "type": "Checklist Form (1.4)",
+          "uploadDate": "2026-07-20",
+          "size": "2.4 MB",
+          "status": "Pending Screening"
+        },
+        {
+          "id": "doc-1784530931682-979",
+          "name": "Informed_Consent_Test_Project_979.pdf",
+          "type": "Respondent Consent Form",
+          "uploadDate": "2026-07-20",
+          "size": "2.4 MB",
+          "status": "Pending Screening"
+        },
+        {
+          "id": "doc-1784530943711-541",
+          "name": "PI_Team_CV_Test_Project_541.pdf",
+          "type": "Curriculum Vitae (CV)",
+          "uploadDate": "2026-07-20",
+          "size": "2.4 MB",
+          "status": "Pending Screening"
+        },
+        {
+          "id": "doc-receipt-1784531027108",
+          "name": "Official_Payment_Receipt_UTM-PAYHUB-451032.pdf",
+          "type": "Official Payment Receipt",
+          "uploadDate": "2026-07-20",
+          "size": "420 KB",
+          "status": "Verified Paid"
+        }
+      ],
+      "formType": "FORM-CLINICAL",
+      "protocolData": {},
+      "assignedEvaluators": [
+        {
+          "id": "USR-003",
+          "name": "Prof. Dr. Ariffin",
+          "email": "ariffin@utm.my",
+          "password": "pass123",
+          "role": "committee",
+          "title": "Panel Reviewer",
+          "department": "Main Ethics Committee"
+        }
+      ],
+      "panelEvaluationResult": {
+        "c1": "Yes",
+        "c2": "Yes",
+        "c3": "Yes",
+        "c4": "Yes",
+        "c5": "Yes"
+      },
+      "approvalLetterName": "Approval letter clinical and non-clinical.pdf"
+    },
+    {
+      "id": "2D6FTQ6xp6I",
+      "projectTitle": "dd",
+      "applicantName": "Dr. Sarah Razak",
+      "applicantEmail": "sarah.r@utm.my",
+      "faculty": "Faculty of Computing",
+      "fundingSource": "MOHE Grant",
+      "formApplied": "Non-Clinical Research Ethics",
+      "applicantCategory": "INTERNAL",
+      "routingEmail": "dean.computing@utm.my",
+      "submissionDate": "2026-07-22",
+      "currentStage": 0,
+      "statusLabel": "Returned by Dean (Revision Required)",
+      "riskClassification": "Pending",
+      "requiresRevision": true,
+      "revisionMessage": "Dean Feedback: Not enough",
+      "feeAmount": 50,
+      "feePaid": "RM 50",
+      "paymentStatus": "Unpaid",
+      "documents": [
+        {
+          "id": "doc-1784695206155-573",
+          "name": "UTM_Checklist_dd_573.pdf",
+          "type": "Checklist Form (1.4)",
+          "uploadDate": "2026-07-22",
+          "size": "2.4 MB",
+          "status": "Pending Screening"
+        },
+        {
+          "id": "doc-1784695206822-921",
+          "name": "Informed_Consent_dd_921.pdf",
+          "type": "Respondent Consent Form",
+          "uploadDate": "2026-07-22",
+          "size": "2.4 MB",
+          "status": "Pending Screening"
+        },
+        {
+          "id": "doc-1784695207777-594",
+          "name": "PI_Team_CV_dd_594.pdf",
+          "type": "Curriculum Vitae (CV)",
+          "uploadDate": "2026-07-22",
+          "size": "2.4 MB",
+          "status": "Pending Screening"
+        }
+      ],
+      "formType": "FORM-NON-CLINICAL",
+      "protocolData": {}
+    }
+  ],
+  "$schema": "./node_modules/json-server/schema.json"
+}
