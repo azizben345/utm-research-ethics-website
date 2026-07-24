@@ -154,7 +154,7 @@ export default function LoginPage({ onLogin }) {
         {/* Prototype Quick-Demo Login Footer */}
         <div style={{ marginTop: '2rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem' }}>
           <p style={{ textAlign: 'center', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 1rem 0' }}>
-            ⚡ Prototype Demo Access (1-Click Login)
+            ⚡ Prototype Demo Access (1-Click Login) - e
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             

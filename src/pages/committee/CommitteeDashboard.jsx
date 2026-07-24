@@ -10,7 +10,8 @@ import {
   CheckCircle2, 
   AlertTriangle, 
   HelpCircle,
-  Inbox
+  Inbox,
+  Search // Added Search icon for the search bar
 } from 'lucide-react';
 import EvaluatorChecklistForm from '../../components/wizards/forms/EvaluatorChecklistForm';
 
@@ -42,6 +43,9 @@ export default function CommitteeDashboard({ user, onViewProtocol }) {
   const [selectedSubmission, setSelectedSubmission] = useState(null);
   const [previewDoc, setPreviewDoc] = useState(null);
   const [loading, setLoading] = useState(false);
+  
+  // NEW: State for the search bar
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Digital Evaluation Rubric State (Form 1.8)
   const [evaluation, setEvaluation] = useState({
@@ -50,7 +54,7 @@ export default function CommitteeDashboard({ user, onViewProtocol }) {
     riskBenefitRatio: 'Satisfactory',
     dataPrivacy: 'Satisfactory',
     comments: '',
-    recommendation: 'Recommend Approval' // Options: 'Recommend Approval' | 'Revision Required'
+    recommendation: 'Recommend Approval'
   });
 
   // Safe Fetch from live backend (fallback to mock data if json-server is offline)
@@ -61,9 +65,6 @@ export default function CommitteeDashboard({ user, onViewProtocol }) {
       .then((data) => {
         const safeData = Array.isArray(data) ? data : [];
         
-        // FILTER LOGIC:
-        // 1. Must be in Stage 2 (Evaluation)
-        // 2. Must contain the logged-in user's email in the assignedEvaluators list
         const myAssignedSubmissions = safeData.filter(s => 
           (s.currentStage === 2) && 
           (s.assignedEvaluators && s.assignedEvaluators.some(e => e.email === user.email))
@@ -87,14 +88,12 @@ export default function CommitteeDashboard({ user, onViewProtocol }) {
     setEvaluation(prev => ({ ...prev, [field]: value }));
   };
 
-  // SUBMIT EVALUATION ACTION (Routes to Stage 3 Decision Making or Back for Revisions)
+  // SUBMIT EVALUATION ACTION
   const handleSumbitEvaluation = async () => {
     if (!selectedSubmission) return;
 
     const isApproved = evaluation.recommendation === 'Recommend Approval';
     
-    // If approved, advance to Stage 3 (Decision Making / Risk Classification)
-    // If revision required, push back to Stage 1 with feedback
     const updatedPayload = {
       ...selectedSubmission,
       currentStage: isApproved ? 3 : 1,
@@ -111,7 +110,7 @@ export default function CommitteeDashboard({ user, onViewProtocol }) {
         body: JSON.stringify(updatedPayload)
       });
 
-      if (res.ok || res.status === 404) { // Status 404 handler allows demo mock data to simulate success!
+      if (res.ok || res.status === 404) {
         alert(`Evaluation successfully submitted!\nVerdict: ${evaluation.recommendation}\n\nThis application has been routed to Stage ${isApproved ? '3 (Decision Making)' : '1 (Revision)'}.`);
         setSelectedSubmission(null);
         fetchAssignedSubmissions();
@@ -121,6 +120,16 @@ export default function CommitteeDashboard({ user, onViewProtocol }) {
       setSelectedSubmission(null);
     }
   };
+
+  // NEW: Filter logic for the search bar
+  const filteredSubmissions = submissions.filter((sub) => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      (sub.id && sub.id.toLowerCase().includes(searchLower)) ||
+      (sub.projectTitle && sub.projectTitle.toLowerCase().includes(searchLower)) ||
+      (sub.applicantName && sub.applicantName.toLowerCase().includes(searchLower))
+    );
+  });
 
   if (loading) {
     return <div className="container" style={{ padding: '3rem', textAlign: 'center' }}>Loading Evaluator Workspace...</div>;
@@ -134,7 +143,7 @@ export default function CommitteeDashboard({ user, onViewProtocol }) {
       {/* ========================================================= */}
       {!selectedSubmission ? (
         <>
-          <div className="flex-between card" style={{ borderLeft: '4px solid var(--purple, #8b5cf6)' }}>
+          <div className="flex-between card" style={{ borderLeft: '4px solid var(--purple, #8b5cf6)', marginBottom: '1.5rem' }}>
             <div>
               <h1 style={{ margin: '0 0 0.25rem 0' }}>Committee Panel Evaluation Portal</h1>
               <p style={{ margin: 0, color: 'var(--text-muted)' }}>
@@ -153,39 +162,76 @@ export default function CommitteeDashboard({ user, onViewProtocol }) {
               <p style={{ margin: 0 }}>You currently have no active ethics submissions pending review.</p>
             </div>
           ) : (
-            <div className="grid-cards">
-              {submissions.map((sub) => (
-                <div key={sub.id} className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <div>
-                    <div className="flex-between" style={{ marginBottom: '0.75rem' }}>
-                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)' }}>{sub.id || 'NO-ID'}</span>
-                      <span className="badge" style={{ backgroundColor: '#f3e8ff', color: '#6b21a8', fontWeight: 600 }}>
-                        Stage 2: Evaluation
-                      </span>
-                    </div>
-                    <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem' }}>{sub.projectTitle || 'Untitled Research Protocol'}</h3>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0 0 0.25rem 0' }}>
-                      <strong>PI:</strong> {sub.applicantName || 'N/A'} | <strong>Type:</strong> {sub.formApplied || 'Research'}
-                    </p>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0 0 1.5rem 0' }}>
-                      Assigned: {sub.assignedDate || 'Recently'}
-                    </p>
-                  </div>
-                  
-                  <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--purple, #8b5cf6)', fontWeight: 600 }}>
-                      ⏳ Action Required
-                    </span>
-                    <button 
-                      className="btn" 
-                      style={{ backgroundColor: '#8b5cf6', color: '#fff' }}
-                      onClick={() => setSelectedSubmission(sub)}
-                    >
-                      Evaluate <ChevronRight size={16} />
-                    </button>
-                  </div>
-                </div>
-              ))}
+            <div className="card">
+              {/* SEARCH BAR WIDGET */}
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1.5rem', gap: '0.75rem', background: 'var(--bg-app)', padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+                <Search size={20} color="var(--text-muted)" />
+                <input 
+                  type="text" 
+                  placeholder="Search by ID, Project Title, or Applicant Name..." 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '0.95rem' }}
+                />
+                {searchTerm && (
+                  <button className="btn" style={{ background: 'transparent', padding: '0.25rem' }} onClick={() => setSearchTerm('')}>
+                    <X size={16} color="var(--text-muted)" />
+                  </button>
+                )}
+              </div>
+
+              {/* TABLE LAYOUT */}
+              <div className="table-container">
+                <table className="custom-table" style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '2px solid var(--border-color)' }}>
+                      <th style={{ padding: '1rem', color: 'var(--text-muted)' }}>Protocol ID</th>
+                      <th style={{ padding: '1rem', color: 'var(--text-muted)' }}>Project Details</th>
+                      <th style={{ padding: '1rem', color: 'var(--text-muted)' }}>Stage</th>
+                      <th style={{ padding: '1rem', color: 'var(--text-muted)' }}>Assigned Date</th>
+                      <th style={{ padding: '1rem', color: 'var(--text-muted)', textAlign: 'right' }}>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredSubmissions.length > 0 ? (
+                      filteredSubmissions.map((sub) => (
+                        <tr key={sub.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                          <td style={{ padding: '1rem', fontWeight: 600 }}>{sub.id || 'NO-ID'}</td>
+                          <td style={{ padding: '1rem' }}>
+                            <div style={{ fontWeight: 600, fontSize: '1rem', marginBottom: '0.25rem' }}>{sub.projectTitle || 'Untitled Research Protocol'}</div>
+                            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                              <strong>PI:</strong> {sub.applicantName || 'N/A'} | <strong>Type:</strong> {sub.formApplied || 'Research'}
+                            </div>
+                          </td>
+                          <td style={{ padding: '1rem' }}>
+                            <span className="badge" style={{ backgroundColor: '#f3e8ff', color: '#6b21a8', fontWeight: 600, padding: '0.25rem 0.5rem', borderRadius: '4px' }}>
+                              Stage 2
+                            </span>
+                          </td>
+                          <td style={{ padding: '1rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                            {sub.assignedDate || 'Recently'}
+                          </td>
+                          <td style={{ padding: '1rem', textAlign: 'right' }}>
+                            <button 
+                              className="btn" 
+                              style={{ backgroundColor: '#8b5cf6', color: '#fff', padding: '0.5rem 1rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+                              onClick={() => setSelectedSubmission(sub)}
+                            >
+                              Evaluate <ChevronRight size={16} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="5" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+                          No protocols match your search query.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </>
@@ -236,22 +282,22 @@ export default function CommitteeDashboard({ user, onViewProtocol }) {
               </p>
 
               <div className="table-container">
-                <table className="custom-table">
+                <table className="custom-table" style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
                   <thead>
-                    <tr>
-                      <th>Document Type</th>
-                      <th>File Name</th>
-                      <th>Action</th>
+                    <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
+                      <th style={{ padding: '0.5rem' }}>Document Type</th>
+                      <th style={{ padding: '0.5rem' }}>File Name</th>
+                      <th style={{ padding: '0.5rem' }}>Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     {(selectedSubmission.documents || []).map((doc, idx) => (
-                      <tr key={doc.id || idx}>
-                        <td style={{ fontWeight: 600, fontSize: '0.85rem' }}>{doc.type || 'Attachment'}</td>
-                        <td style={{ color: '#8b5cf6', fontWeight: 500, fontSize: '0.85rem', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <tr key={doc.id || idx} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                        <td style={{ fontWeight: 600, fontSize: '0.85rem', padding: '0.5rem' }}>{doc.type || 'Attachment'}</td>
+                        <td style={{ color: '#8b5cf6', fontWeight: 500, fontSize: '0.85rem', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', padding: '0.5rem' }}>
                           {doc.name || `File_${idx + 1}.pdf`}
                         </td>
-                        <td>
+                        <td style={{ padding: '0.5rem' }}>
                           <button 
                             className="btn" 
                             style={{ padding: '0.25rem 0.5rem', backgroundColor: 'var(--bg-app)', border: '1px solid var(--border-color)' }}
@@ -272,15 +318,13 @@ export default function CommitteeDashboard({ user, onViewProtocol }) {
             <EvaluatorChecklistForm 
                 formApplied={selectedSubmission.formApplied} 
                 onSubmit={(evaluationData) => {
-                    // 1. Prepare Payload
                     const updatedPayload = {
                         ...selectedSubmission,
-                        currentStage: 4, // Moving to Stage 4 Decision
+                        currentStage: 4, 
                         statusLabel: 'Evaluated',
-                        panelEvaluationResult: evaluationData // Stores the form answers in the DB
+                        panelEvaluationResult: evaluationData 
                     };
                     
-                    // 2. Perform live update
                     fetch(`http://localhost:3001/submissions/${selectedSubmission.id}`, {
                         method: 'PATCH',
                         headers: { 'Content-Type': 'application/json' },
@@ -299,28 +343,27 @@ export default function CommitteeDashboard({ user, onViewProtocol }) {
 
       {/* MOCK PDF PREVIEW MODAL */}
       {previewDoc && (
-        <div className="modal-overlay" onClick={() => setPreviewDoc(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="modal-overlay" onClick={() => setPreviewDoc(null)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ backgroundColor: '#fff', padding: '2rem', borderRadius: '8px', maxWidth: '500px', width: '100%' }}>
+            <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <FileText color="#8b5cf6" size={20} />
                 <h4 style={{ margin: 0 }}>Reference Document: {previewDoc.name || 'Preview'}</h4>
               </div>
-              <button className="btn" style={{ padding: '0.25rem', background: 'transparent' }} onClick={() => setPreviewDoc(null)}>
+              <button className="btn" style={{ padding: '0.25rem', background: 'transparent', border: 'none', cursor: 'pointer' }} onClick={() => setPreviewDoc(null)}>
                 <X size={20} />
               </button>
             </div>
             <div className="modal-body">
-              <div style={{ padding: '3rem', border: '2px dashed var(--border-color)', borderRadius: 'var(--radius-md)', background: '#fff', textAlign: 'center' }}>
-                <FileText size={48} color="var(--text-muted)" style={{ margin: '0 auto 1rem auto' }} />
-                <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-main)' }}>PDF Content Simulator</h3>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Displaying evaluator reference copy for <strong>{previewDoc.type || 'Attachment'}</strong>.</p>
+              <div style={{ padding: '3rem', border: '2px dashed var(--border-color)', borderRadius: '8px', background: '#f9fafb', textAlign: 'center' }}>
+                <FileText size={48} color="#9ca3af" style={{ margin: '0 auto 1rem auto' }} />
+                <h3 style={{ margin: '0 0 0.5rem 0', color: '#111827' }}>PDF Content Simulator</h3>
+                <p style={{ color: '#6b7280', fontSize: '0.9rem' }}>Displaying evaluator reference copy for <strong>{previewDoc.type || 'Attachment'}</strong>.</p>
               </div>
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 }

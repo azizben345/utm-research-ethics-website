@@ -16,7 +16,7 @@ export default function Step2Questionnaire({ formData, setFormData, onPrev, onNe
     <div className="card">
       <div className="flex-between" style={{ marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
         <div>
-          <h2 style={{ margin: '0 0 0.25rem 0' }}>2. Protocol Questionnaire & Ethical Declarations</h2>
+          <h2 style={{ margin: '0 0 0.25rem 0' }}>2. Application Form</h2>
           <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
             Project: <strong>{formData.projectTitle}</strong> | Auto-Draft Saving Enabled
           </span>

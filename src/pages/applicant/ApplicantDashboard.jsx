@@ -22,6 +22,7 @@ export default function ApplicantDashboard({ user, onStartNew, onViewProtocol })
   const [selectedSubmission, setSelectedSubmission] = useState(null);
   const [previewDoc, setPreviewDoc] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
   
   // States for Fee Payment Integration
   const [activePaymentApp, setActivePaymentApp] = useState(null);
@@ -131,6 +132,17 @@ export default function ApplicantDashboard({ user, onStartNew, onViewProtocol })
     }
   };
 
+  const filteredSubmissions = submissions.filter(sub => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      (sub.id && sub.id.toLowerCase().includes(query)) ||
+      (sub.projectTitle && sub.projectTitle.toLowerCase().includes(query)) ||
+      (sub.statusLabel && sub.statusLabel.toLowerCase().includes(query)) ||
+      (sub.applicantName && sub.applicantName.toLowerCase().includes(query))
+    );
+  });
+
   if (loading) {
     return <div className="container">Loading Dashboard...</div>;
   }
@@ -139,66 +151,96 @@ export default function ApplicantDashboard({ user, onStartNew, onViewProtocol })
     <div className="container">
       
       {/* ========================================================= */}
-      {/* VIEW 1: MASTER LIST (Shows if no specific project is clicked) */}
+      {/* VIEW 1: MASTER LIST (Table Format with Search)            */}
       {/* ========================================================= */}
       {!selectedSubmission ? (
         <>
-          <div className="flex-between card">
+          <div className="flex-between card" style={{ flexWrap: 'wrap', gap: '1rem' }}>
             <div>
               <h1 style={{ margin: '0 0 0.25rem 0' }}>Research Ethics Submissions</h1>
               <p style={{ margin: 0, color: 'var(--text-muted)' }}>
                 Manage and track all ongoing research projects under UTM REC review.
               </p>
             </div>
-            {/* <button className="btn btn-primary" onClick={() => navigate('/target-page')}>
-              <PlusCircle size={18} /> New Submission
-            </button> */}
+            
+            {/* SEARCH INPUT */}
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <input 
+                type="text" 
+                placeholder="Search ID, Title, Status..." 
+                className="form-control"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{ minWidth: '250px', padding: '0.6rem', borderRadius: '6px' }}
+              />
+            </div>
           </div>
 
-          <div className="grid-cards">
-            {submissions.map((sub) => {
-              const isPendingPay = sub.statusLabel === 'Drafted (Pending Payment)' || sub.statusLabel === 'Pending Payment';
-
-              return (
-                <div key={sub.id} className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', border: isPendingPay ? '2px solid var(--primary)' : '1px solid var(--border-color)' }}>
-                  <div>
-                    <div className="flex-between" style={{ marginBottom: '0.75rem' }}>
-                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)' }}>{sub.id}</span>
-                      <span className="badge badge-primary">Stage {sub.currentStage}</span>
-                    </div>
-                    <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem' }}>{sub.projectTitle}</h3>
-                    <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', margin: '0 0 1.5rem 0' }}>
-                      Submitted on: {sub.submissionDate}
-                    </p>
-                  </div>
-                  
-                  <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '0.8rem', color: sub.requiresRevision ? 'var(--warning)' : isPendingPay ? 'var(--primary)' : 'var(--text-muted)', fontWeight: 600 }}>
-                      {sub.requiresRevision ? '⚠️ Revision Required' : isPendingPay ? '💳 Fee Payment Required' : sub.statusLabel}
-                    </span>
-                    
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      {isPendingPay && (
-                        <button 
-                          className="btn btn-primary" 
-                          style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
-                          onClick={() => setActivePaymentApp(sub)}
-                        >
-                          <CreditCard size={14} /> Pay Fee
-                        </button>
-                      )}
-                      <button 
-                        className="btn" 
-                        style={{ backgroundColor: 'var(--primary-light)', color: 'var(--primary)' }}
-                        onClick={() => setSelectedSubmission(sub)}
-                      >
-                        Manage <ChevronRight size={16} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="card">
+            <div className="table-container">
+              <table className="custom-table" style={{ width: '100%', textAlign: 'left' }}>
+                <thead>
+                  <tr>
+                    <th>Ref ID</th>
+                    <th>Project Title</th>
+                    <th>Stage</th>
+                    <th>Status</th>
+                    <th>Submission Date</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredSubmissions.length > 0 ? (
+                    filteredSubmissions.map((sub) => {
+                      const isPendingPay = sub.statusLabel === 'Drafted (Pending Payment)' || sub.statusLabel === 'Pending Payment';
+                      return (
+                        <tr key={sub.id} style={{ borderLeft: isPendingPay ? '4px solid var(--primary)' : '4px solid transparent' }}>
+                          <td style={{ fontWeight: 600 }}>{sub.id}</td>
+                          <td style={{ maxWidth: '250px' }}>
+                            <div style={{ fontWeight: 600, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {sub.projectTitle}
+                            </div>
+                          </td>
+                          <td><span className="badge badge-primary">Stage {sub.currentStage}</span></td>
+                          <td>
+                            <span style={{ fontSize: '0.8rem', color: sub.requiresRevision ? 'var(--warning)' : isPendingPay ? 'var(--primary)' : 'var(--text-muted)', fontWeight: 600 }}>
+                              {sub.requiresRevision ? '⚠️ Revision Required' : isPendingPay ? '💳 Fee Payment Required' : sub.statusLabel}
+                            </span>
+                          </td>
+                          <td style={{ color: 'var(--text-muted)' }}>{sub.submissionDate}</td>
+                          <td>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                              {isPendingPay && (
+                                <button 
+                                  className="btn btn-primary btn-sm" 
+                                  style={{ padding: '0.3rem 0.6rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                                  onClick={() => setActivePaymentApp(sub)}
+                                >
+                                  <CreditCard size={14} /> Pay
+                                </button>
+                              )}
+                              <button 
+                                className="btn btn-sm" 
+                                style={{ backgroundColor: 'var(--primary-light)', color: 'var(--primary)', padding: '0.3rem 0.6rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                                onClick={() => setSelectedSubmission(sub)}
+                              >
+                                Manage <ChevronRight size={14} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan="6" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+                        No submissions match your search query.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </>
       ) : (
@@ -357,71 +399,77 @@ export default function ApplicantDashboard({ user, onStartNew, onViewProtocol })
           )}
 
           {/* DIRECT DOCUMENT UPLOADER & CORRECTION SECTION */}
-          <div className="card" style={{ marginTop: '1.5rem', borderLeft: '4px solid var(--primary)' }}>
-            <h3 style={{ marginTop: 0, marginBottom: '0.5rem' }}>Upload / Revise Documents</h3>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-              Use this section to upload corrected files requested by the Secretariat or Committee during revisions.
-            </p>
+          { (
+              selectedSubmission?.statusLabel?.toLowerCase().includes('amend') 
+              || selectedSubmission?.statusLabel === 'Approved & Closed'
+              || selectedSubmission?.statusLabel === 'Returned for Revision' // stc
+            ) && (
+            <div className="card" style={{ marginTop: '1.5rem', borderLeft: '4px solid var(--primary)' }}>
+              <h3 style={{ marginTop: 0, marginBottom: '0.5rem' }}>Upload / Revise Documents</h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+                Use this section to upload amended documents or requested files for approved projects.
+              </p>
 
-            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-              <input 
-                type="text" 
-                id="new-doc-type" 
-                placeholder="Document Type (e.g. Revised CV)" 
-                className="form-control" 
-                style={{ flex: 1, minWidth: '200px', padding: '0.5rem' }}
-              />
-              <input 
-                type="file" 
-                id="new-doc-file" 
-                accept=".pdf" 
-                style={{ padding: '0.4rem', background: '#fff', border: '1px solid var(--border-color)', borderRadius: '4px' }}
-              />
-              <button 
-                className="btn btn-primary"
-                onClick={async () => {
-                  const typeInput = document.getElementById('new-doc-type');
-                  const fileInput = document.getElementById('new-doc-file');
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                <input 
+                  type="text" 
+                  id="new-doc-type" 
+                  placeholder="Document Type (e.g. Revised CV)" 
+                  className="form-control" 
+                  style={{ flex: 1, minWidth: '200px', padding: '0.5rem' }}
+                />
+                <input 
+                  type="file" 
+                  id="new-doc-file" 
+                  accept=".pdf" 
+                  style={{ padding: '0.4rem', background: '#fff', border: '1px solid var(--border-color)', borderRadius: '4px' }}
+                />
+                <button 
+                  className="btn btn-primary"
+                  onClick={async () => {
+                    const typeInput = document.getElementById('new-doc-type');
+                    const fileInput = document.getElementById('new-doc-file');
 
-                  if (!typeInput.value || !fileInput.files[0]) {
-                    alert("Please enter a document type and select a PDF file.");
-                    return;
-                  }
-
-                  const newDoc = {
-                    id: `doc-${Date.now()}`,
-                    type: typeInput.value,
-                    name: fileInput.files[0].name,
-                    uploadDate: new Date().toISOString().split('T')[0],
-                    status: 'Uploaded (Pending Review)'
-                  };
-
-                  const updatedDocs = [...(selectedSubmission.documents || []), newDoc];
-
-                  try {
-                    const res = await fetch(`http://localhost:3001/submissions/${selectedSubmission.id}`, {
-                      method: 'PATCH',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ documents: updatedDocs, requiresRevision: false }) // clears revision flag on upload
-                    });
-
-                    if (res.ok) {
-                      alert("Document uploaded successfully!");
-                      typeInput.value = '';
-                      fileInput.value = '';
-                      fetchSubmissions();
-                      setSelectedSubmission(prev => ({ ...prev, documents: updatedDocs, requiresRevision: false }));
+                    if (!typeInput.value || !fileInput.files[0]) {
+                      alert("Please enter a document type and select a PDF file.");
+                      return;
                     }
-                  } catch (err) {
-                    console.error("Upload failed:", err);
-                    alert("Failed to update database.");
-                  }
-                }}
-              >
-                Upload Document
-              </button>
+
+                    const newDoc = {
+                      id: `doc-${Date.now()}`,
+                      type: typeInput.value,
+                      name: fileInput.files[0].name,
+                      uploadDate: new Date().toISOString().split('T')[0],
+                      status: 'Uploaded (Pending Review)'
+                    };
+
+                    const updatedDocs = [...(selectedSubmission.documents || []), newDoc];
+
+                    try {
+                      const res = await fetch(`http://localhost:3001/submissions/${selectedSubmission.id}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ documents: updatedDocs, requiresRevision: false })
+                      });
+
+                      if (res.ok) {
+                        alert("Document uploaded successfully!");
+                        typeInput.value = '';
+                        fileInput.value = '';
+                        fetchSubmissions();
+                        setSelectedSubmission(prev => ({ ...prev, documents: updatedDocs, requiresRevision: false }));
+                      }
+                    } catch (err) {
+                      console.error("Upload failed:", err);
+                      alert("Failed to update database.");
+                    }
+                  }}
+                >
+                  Upload Document
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* CONDITIONAL FEE PAYMENT ALERT BANNER */}
           {selectedSubmission.statusLabel === 'Drafted (Pending Payment)' && (

@@ -24,6 +24,7 @@ export default function SecretariatDashboard({ user, onViewProtocol }) {
   const [isChecklistOpen, setIsChecklistOpen] = useState(false);
   const [previewDoc, setPreviewDoc] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // 2. Safe Fetch Function with Error Handling
   const fetchSubmissions = () => {
@@ -220,6 +221,18 @@ export default function SecretariatDashboard({ user, onViewProtocol }) {
     }
   };
 
+  // Filter submissions based on search query
+  const filteredSubmissions = submissions.filter(sub => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      (sub.id && sub.id.toLowerCase().includes(query)) ||
+      (sub.projectTitle && sub.projectTitle.toLowerCase().includes(query)) ||
+      (sub.statusLabel && sub.statusLabel.toLowerCase().includes(query)) ||
+      (sub.applicantName && sub.applicantName.toLowerCase().includes(query))
+    );
+  });
+
   if (loading) {
     return (
       <div className="container" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
@@ -237,19 +250,31 @@ export default function SecretariatDashboard({ user, onViewProtocol }) {
       {/* ========================================================= */}
       {!selectedSubmission ? (
         <>
-          <div className="flex-between card" style={{ borderLeft: '4px solid var(--warning)' }}>
+          <div className="flex-between card" style={{ borderLeft: '4px solid var(--warning)', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
               <h1 style={{ margin: '0 0 0.25rem 0' }}>Secretariat Screening Portal</h1>
               <p style={{ margin: 0, color: 'var(--text-muted)' }}>
                 Conduct early screenings (within 1 week), verify document completeness, and mark Day 0.
               </p>
             </div>
-            <button className="btn" style={{ background: 'var(--bg-app)', border: '1px solid var(--border-color)' }} onClick={fetchSubmissions}>
-              <RefreshCw size={16} /> Refresh Queue
-            </button>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+              {/* SEARCH INPUT */}
+              <input 
+                type="text" 
+                placeholder="Search ID, Title, PI, or Status..." 
+                className="form-control"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{ minWidth: '280px', padding: '0.6rem', borderRadius: '6px' }}
+              />
+              <button className="btn" style={{ background: 'var(--bg-app)', border: '1px solid var(--border-color)' }} onClick={fetchSubmissions}>
+                <RefreshCw size={16} /> Refresh Queue
+              </button>
+            </div>
           </div>
 
-          {/* Fallback if database is completely empty */}
+          {/* Fallback if database is completely empty (Before Filtering) */}
           {submissions.length === 0 ? (
             <div className="card" style={{ textAlign: 'center', padding: '4rem 2rem', color: 'var(--text-muted)' }}>
               <Inbox size={48} style={{ margin: '0 auto 1rem auto', opacity: 0.5 }} />
@@ -257,46 +282,72 @@ export default function SecretariatDashboard({ user, onViewProtocol }) {
               <p style={{ margin: 0 }}>There are currently no research applications waiting in the database queue.</p>
             </div>
           ) : (
-            <div className="grid-cards">
-              {submissions.map((sub) => (
-                <div key={sub.id} className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <div>
-                    <div className="flex-between" style={{ marginBottom: '0.75rem' }}>
-                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)' }}>{sub.id || 'NO-ID'}</span>
-                      <span className="badge badge-warning">
-                        Stage {sub.currentStage || 1}: {(sub.currentStage || 1) === 1 ? 'Screening' : 'Evaluation'}
-                      </span>
-                    </div>
-                    <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem' }}>{sub.projectTitle || 'Untitled Research Protocol'}</h3>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0 0 0.25rem 0' }}>
-                      <strong>PI:</strong> {sub.applicantName || 'Unknown Applicant'}
-                    </p>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0 0 1.5rem 0' }}>
-                      Submitted: {sub.submissionDate || 'Recently'}
-                    </p>
-                  </div>
-                  
-                  <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.8rem', color: sub.requiresRevision ? 'var(--danger)' : 'var(--success)', fontWeight: 600 }}>
-                      {sub.requiresRevision ? '⚠️ Revisions Requested' : (sub.currentStage > 1 ? '✔ Cleared (Day 0)' : 'Pending Screening')}
-                    </span>
-                    <button 
-                      className="btn btn-warning" 
-                      onClick={() => {
-                        setSelectedSubmission(sub);
-                        // Auto-open checklist if it's not an exemption
-                        if (sub.formType !== 'FORM-EXEMPTION') setIsChecklistOpen(true);
-                      }}
-                    >
-                      Manage <ChevronRight size={16} />
-                    </button>
-                  </div>
-                </div>
-              ))}
+            <div className="card">
+              <div className="table-container">
+                <table className="custom-table" style={{ width: '100%', textAlign: 'left' }}>
+                  <thead>
+                    <tr>
+                      <th>Ref ID</th>
+                      <th>Project Title</th>
+                      <th>PI / Applicant</th>
+                      <th>Stage</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredSubmissions.length > 0 ? (
+                      filteredSubmissions.map((sub) => (
+                        <tr key={sub.id}>
+                          <td style={{ fontWeight: 600 }}>{sub.id || 'NO-ID'}</td>
+                          <td style={{ maxWidth: '250px' }}>
+                            <div style={{ fontWeight: 600, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {sub.projectTitle || 'Untitled Research Protocol'}
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                              Submitted: {sub.submissionDate || 'Recently'}
+                            </div>
+                          </td>
+                          <td>{sub.applicantName || 'Unknown Applicant'}</td>
+                          <td>
+                            <span className="badge badge-warning">
+                              Stage {sub.currentStage || 1}
+                            </span>
+                          </td>
+                          <td>
+                            <span style={{ fontSize: '0.8rem', color: sub.requiresRevision ? 'var(--danger)' : 'var(--success)', fontWeight: 600 }}>
+                              {sub.requiresRevision ? '⚠️ Revisions Requested' : (sub.currentStage > 1 ? '✔ Cleared (Day 0)' : 'Pending Screening')}
+                            </span>
+                          </td>
+                          <td>
+                            <button 
+                              className="btn btn-warning btn-sm" 
+                              style={{ padding: '0.3rem 0.6rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                              onClick={() => {
+                                setSelectedSubmission(sub);
+                                // Auto-open checklist if it's not an exemption
+                                if (sub.formType !== 'FORM-EXEMPTION') setIsChecklistOpen(true);
+                              }}
+                            >
+                              Manage <ChevronRight size={14} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="6" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+                          No submissions match your search query "{searchQuery}".
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </>
-      ) : (
+        ) : (
         /* ========================================================= */
         /* VIEW 2: DETAIL SCREENING & DOCUMENT AUDIT WORKSPACE       */
         /* ========================================================= */
@@ -347,7 +398,7 @@ export default function SecretariatDashboard({ user, onViewProtocol }) {
           {/* EVALUATOR SECTION */}
           <header className="card" style={{ marginBottom: '1.5rem', borderLeft: '4px solid #8b5cf6', backgroundColor: '#faf5ff' }}>
             <div className="flex-between">
-              <h3><Users size={20} /> Appoint Evaluators</h3>
+              <h3><Users size={20} /> Appoint Evaluators (stc: need to send email invites)</h3>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <select value={selectedEvaluatorEmail} onChange={(e) => setSelectedEvaluatorEmail(e.target.value)}>
                   <option value="">-- Select --</option>
