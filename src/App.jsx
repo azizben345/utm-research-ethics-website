@@ -8,6 +8,7 @@ import NewSubmissionWizard from './pages/applicant/NewSubmissionWizard';
 import GuidelinesPage from './pages/GuidelinesPage';
 // Secretariat Pages:
 import SecretariatDashboard from './pages/secretariat/SecretariatDashboard';
+import ConfigureEvaluators from './pages/secretariat/ConfigureEvaluators';
 // Dean Pages:
 import DeanDashboard from './pages/dean/DeanDashboard';
 // Committee Pages:
@@ -91,6 +92,10 @@ function App() {
             user={currentUser} 
             onViewProtocol={handleViewProtocol} 
           />
+        )}
+
+        {currentUser.role === 'secretariat' && activeTab === 'configure-evaluators' && (
+          <ConfigureEvaluators />
         )}
 
         {/* ROLE: DEAN ROUTING */}

@@ -672,6 +672,145 @@
           "submittedAt": "2026-07-23T07:45:17.756Z"
         }
       ]
+    },
+    {
+      "id": "6NjCbyWjCy0",
+      "projectTitle": "Test 24-7",
+      "applicantName": "Dr. Sarah Razak",
+      "applicantEmail": "sarah.r@utm.my",
+      "faculty": "Faculty of Computing",
+      "fundingSource": "MOHE Grant",
+      "formApplied": "Non-Clinical Research Ethics",
+      "applicantCategory": "INTERNAL",
+      "routingEmail": "dean.computing@utm.my",
+      "submissionDate": "2026-07-24",
+      "currentStage": 5,
+      "statusLabel": "Approved & Closed",
+      "riskClassification": "Pending",
+      "requiresRevision": false,
+      "revisionMessage": "",
+      "feeAmount": 50,
+      "feePaid": "RM 50.00",
+      "paymentStatus": "Paid (Pending Verification)",
+      "documents": [
+        {
+          "id": "doc-1784858334743-172",
+          "name": "UTM_Checklist_Test_24-7_172.pdf",
+          "type": "Checklist Form (1.4)",
+          "uploadDate": "2026-07-24",
+          "size": "2.4 MB",
+          "status": "Pending Screening"
+        },
+        {
+          "id": "doc-1784858335375-240",
+          "name": "Informed_Consent_Test_24-7_240.pdf",
+          "type": "Respondent Consent Form",
+          "uploadDate": "2026-07-24",
+          "size": "2.4 MB",
+          "status": "Pending Screening"
+        },
+        {
+          "id": "doc-1784858338638-361",
+          "name": "PI_Team_CV_Test_24-7_361.pdf",
+          "type": "Curriculum Vitae (CV)",
+          "uploadDate": "2026-07-24",
+          "size": "2.4 MB",
+          "status": "Pending Screening"
+        },
+        {
+          "id": "doc-1784858345220-985",
+          "name": "Gantt_Chart_Test_24-7_985.pdf",
+          "type": "Research Procedure Gantt Chart",
+          "uploadDate": "2026-07-24",
+          "size": "2.4 MB",
+          "status": "Pending Screening"
+        },
+        {
+          "id": "doc-1784858345686-252",
+          "name": "Study_Protocol_Test_24-7_252.pdf",
+          "type": "Research Instrument / Protocol",
+          "uploadDate": "2026-07-24",
+          "size": "2.4 MB",
+          "status": "Pending Screening"
+        },
+        {
+          "id": "doc-receipt-1784858435413",
+          "name": "Official_Payment_Receipt_UTM-PAYHUB-300363.pdf",
+          "type": "Official Payment Receipt",
+          "uploadDate": "2026-07-24",
+          "size": "420 KB",
+          "status": "Verified Paid"
+        }
+      ],
+      "formType": "FORM-NON-CLINICAL",
+      "protocolData": {},
+      "assignedEvaluators": [
+        {
+          "id": "USR-003",
+          "name": "Prof. Dr. Ariffin",
+          "email": "ariffin@utm.my",
+          "password": "pass123",
+          "role": "committee",
+          "title": "Panel Reviewer",
+          "department": "Main Ethics Committee"
+        }
+      ],
+      "panelEvaluationResult": {
+        "nc1": "Yes",
+        "nc2": "Yes",
+        "nc3": "Yes",
+        "nc4": "Yes",
+        "nc5": "Yes"
+      },
+      "approvalLetterName": "Approval letter clinical and non-clinical.pdf",
+      "periodicReports": [
+        {
+          "reportNo": "1",
+          "applicationNo": "6NjCbyWjCy0",
+          "approvalNo": "",
+          "dateOfApproval": "",
+          "researchType": "Clinical",
+          "researchTitle": "Test 24-7",
+          "piName": "Dr. Sarah Razak",
+          "contactNumber": "",
+          "email": "sarah.r@utm.my",
+          "department": "",
+          "faculty": "Faculty of Computing",
+          "hasStarted": "Yes",
+          "actualStartDate": "",
+          "expectedStartDate": "",
+          "hasCompleted": "No",
+          "targetedCompletionDate": "",
+          "researchSite": "",
+          "additionalSites": "No",
+          "changesToSites": "No",
+          "proposedParticipants": "",
+          "actualRecruited": "",
+          "actualCompleted": "",
+          "withdrawalConsent": "",
+          "withdrawalFollowUp": "",
+          "withdrawalDeath": "",
+          "withdrawalOther": "",
+          "failureAdverse": "",
+          "failureEfficacy": "",
+          "increaseRecruitment": "No",
+          "hasSusars": "No",
+          "susarsDetails": "",
+          "susarsNotified": "No",
+          "susarsReason": "",
+          "riskBenefitMaintained": "No",
+          "riskBenefitElaboration": "",
+          "hasAmendments": "Yes",
+          "amendmentsApproved": "No",
+          "amendmentApprovalDate": "",
+          "amendmentsReason": "",
+          "piSignature": "",
+          "piDeclarationName": "Dr. Sarah Razak",
+          "declarationDate": "2026-07-24",
+          "id": 1784859267733,
+          "submittedAt": "2026-07-24T02:14:27.733Z"
+        }
+      ]
     }
   ],
   "$schema": "./node_modules/json-server/schema.json"

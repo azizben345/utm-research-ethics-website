@@ -49,6 +49,12 @@ export default function RoleNavbar({ user, onLogout, activeTab, setActiveTab }) 
             <>
               {/* <li className="nav-item active">Early Screenings (Day 0)</li> */}
               <li className="nav-item active">Screenings</li>
+              <li 
+                className={`nav-item ${activeTab === 'configure-evaluators' ? 'active' : ''}`}
+                onClick={() => setActiveTab('configure-evaluators')}
+              >
+                Configure Evaluators
+              </li>
               {/* <li className="nav-item">Meeting Agendas</li>
               <li className="nav-item">Approval Issuance</li> */}
             </>
